@@ -1,0 +1,199 @@
+import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
+import api from '../../api/axios';
+import { formatDateTime, formatCurrency, getStatusLabel, getStatusColor, getPaymentMethodLabel } from '../../utils/formatters';
+import { getId } from '../../utils/getId';
+import PageHeader from '../../components/common/PageHeader';
+import DataTable from '../../components/common/DataTable';
+import { FaEye, FaTimes, FaHistory } from 'react-icons/fa';
+
+const OrdersHistory = () => {
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [filter, setFilter] = useState({ orderType: '', status: '', startDate: '', endDate: '' });
+    const [selectedOrder, setSelectedOrder] = useState(null);
+
+    const fetchOrders = async () => {
+        setLoading(true);
+        try {
+            const params = new URLSearchParams();
+            if (filter.orderType) params.append('orderType', filter.orderType);
+            if (filter.status) params.append('status', filter.status);
+            if (filter.startDate) params.append('startDate', filter.startDate);
+            if (filter.endDate) params.append('endDate', filter.endDate);
+            const res = await api.get(`/orders?${params}`);
+            setOrders(res.data.data);
+        } catch { toast.error('Error fetching orders'); }
+        finally { setLoading(false); }
+    };
+
+    useEffect(() => { fetchOrders(); }, [filter]);
+
+    const updateStatus = async (orderId, status) => {
+        try {
+            await api.put(`/orders/${orderId}/status`, { status });
+            toast.success('Order status updated');
+            fetchOrders();
+            if (selectedOrder && getId(selectedOrder) === orderId) {
+                setSelectedOrder({ ...selectedOrder, status });
+            }
+        } catch (err) { toast.error(err.response?.data?.message || 'Error'); }
+    };
+
+    const settleInvoice = async (order) => {
+        const due = Number(order.dueAmount || order.totalAmount || 0);
+        const methodInput = window.prompt('Settlement method: cash or visa', 'cash');
+        if (!methodInput) return;
+        const paymentMethod = methodInput.toLowerCase() === 'visa' ? 'visa' : 'cash';
+
+        let paidAmount = due;
+        if (paymentMethod === 'cash') {
+            const paidInput = window.prompt(`Remaining due: ${due.toFixed(2)}. Enter paid amount:`, due.toFixed(2));
+            if (!paidInput) return;
+            paidAmount = Number(paidInput);
+            if (Number.isNaN(paidAmount) || paidAmount < due) {
+                toast.error('Paid amount must be valid and >= remaining due');
+                return;
+            }
+        }
+
+        try {
+            await api.put(`/orders/${getId(order)}/settle`, { paymentMethod, paidAmount });
+            toast.success('Pending invoice settled successfully');
+            fetchOrders();
+            if (selectedOrder && getId(selectedOrder) === getId(order)) {
+                setSelectedOrder(null);
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Settlement failed');
+        }
+    };
+
+    const columns = [
+        { key: 'orderNumber', label: 'Invoice #', render: (val) => <span className="cell-bold">{val}</span> },
+        { key: 'createdAt', label: 'Date', render: (val) => formatDateTime(val), width: 160 },
+        {
+            key: 'orderType', label: 'Type', width: 100,
+            render: (val) => <span className={`badge ${val === 'POS' ? 'badge-primary' : 'badge-success'}`}>{val === 'POS' ? 'POS' : 'Online'}</span>
+        },
+        {
+            key: 'status', label: 'Status', width: 110,
+            render: (val) => { const sc = getStatusColor(val); return <span className={`badge ${sc.cls}`}>{getStatusLabel(val)}</span>; }
+        },
+        { key: 'totalAmount', label: 'Total', render: (val) => <span className="cell-bold" style={{ color: 'var(--color-primary)' }}>{formatCurrency(val)}</span>, width: 120 },
+        {
+            key: 'paymentMethod', label: 'Payment', width: 130,
+            render: (val, row) => val === 'pending' ? <span className="badge badge-warning">Pending ({(row.dueAmount ?? row.totalAmount)?.toFixed?.(2)})</span> : getPaymentMethodLabel(val)
+        },
+        {
+            key: 'actions', label: 'Actions', sortable: false, noExport: true, width: 200,
+            render: (_, row) => (
+                <div style={{ display: 'flex', gap: 'var(--space-1)', flexWrap: 'wrap' }}>
+                    <button className="btn btn-ghost btn-sm" onClick={(e) => { e.stopPropagation(); setSelectedOrder(row); }}>
+                        <FaEye size={12} /> Details
+                    </button>
+                    {row.orderType === 'ONLINE' && row.status === 'pending' && (
+                        <>
+                            <button className="btn btn-sm" style={{ background: 'var(--color-info-light)', color: 'var(--color-info-dark)' }} onClick={(e) => { e.stopPropagation(); updateStatus(getId(row), 'processing'); }}>Process</button>
+                            <button className="btn btn-sm" style={{ background: 'var(--color-danger-light)', color: 'var(--color-danger-dark)' }} onClick={(e) => { e.stopPropagation(); updateStatus(getId(row), 'cancelled'); }}>Cancel</button>
+                        </>
+                    )}
+                    {row.status === 'processing' && (
+                        <button className="btn btn-sm" style={{ background: 'var(--color-success-light)', color: 'var(--color-success-dark)' }} onClick={(e) => { e.stopPropagation(); updateStatus(getId(row), 'delivered'); }}>Delivered</button>
+                    )}
+                    {(row.paymentMethod === 'pending' || (row.dueAmount || 0) > 0) && (
+                        <button className="btn btn-sm" style={{ background: 'var(--color-warning-light)', color: 'var(--color-warning-dark)' }} onClick={(e) => { e.stopPropagation(); settleInvoice(row); }}>Settle</button>
+                    )}
+                </div>
+            )
+        }
+    ];
+
+    return (
+        <div className="page-wrapper" id="orders-history-page">
+            <PageHeader
+                title="Sales History"
+                subtitle="View and manage all sales and orders"
+                breadcrumbs={[{ label: 'Sales', to: '/orders' }, { label: 'Sales History' }]}
+            />
+
+            {/* Filters */}
+            <div className="filter-bar" style={{ marginBottom: 'var(--space-5)' }}>
+                <select value={filter.orderType} onChange={e => setFilter({ ...filter, orderType: e.target.value })} className="form-select" style={{ width: 160 }}>
+                    <option value="">All Types</option>
+                    <option value="POS">POS</option>
+                    <option value="ONLINE">Online</option>
+                </select>
+                <select value={filter.status} onChange={e => setFilter({ ...filter, status: e.target.value })} className="form-select" style={{ width: 160 }}>
+                    <option value="">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                    <option value="completed">Completed</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                <input type="date" value={filter.startDate} onChange={e => setFilter({ ...filter, startDate: e.target.value })} className="form-input" style={{ width: 160 }} />
+                <input type="date" value={filter.endDate} onChange={e => setFilter({ ...filter, endDate: e.target.value })} className="form-input" style={{ width: 160 }} />
+            </div>
+
+            <DataTable
+                columns={columns}
+                data={orders}
+                loading={loading}
+                emptyTitle="No orders found"
+                emptyDescription="Try adjusting your filters."
+                emptyIcon={FaHistory}
+                exportFilename="sales_history.csv"
+            />
+
+            {/* Order Detail Modal */}
+            {selectedOrder && (
+                <div className="modal-overlay" onClick={() => setSelectedOrder(null)}>
+                    <div className="modal-content modal-lg" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>Invoice {selectedOrder.orderNumber}</h3>
+                            <button className="btn btn-ghost btn-icon" onClick={() => setSelectedOrder(null)}><FaTimes size={16} /></button>
+                        </div>
+                        <div className="modal-body">
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)', marginBottom: 'var(--space-5)', fontSize: 'var(--font-size-md)' }}>
+                                <div><strong>Date:</strong> {formatDateTime(selectedOrder.createdAt)}</div>
+                                <div><strong>Type:</strong> {selectedOrder.orderType === 'POS' ? 'POS Sale' : 'Online'}</div>
+                                <div><strong>Status:</strong> <span className={`badge ${getStatusColor(selectedOrder.status).cls}`}>{getStatusLabel(selectedOrder.status)}</span></div>
+                                <div><strong>Cashier:</strong> {selectedOrder.pharmacistId?.name || selectedOrder.pharmacist?.name || '—'}</div>
+                                {selectedOrder.customerPhone && <div><strong>Phone:</strong> {selectedOrder.customerPhone}</div>}
+                                {selectedOrder.deliveryAddress && <div><strong>Address:</strong> {selectedOrder.deliveryAddress}</div>}
+                                {selectedOrder.notes && <div style={{ gridColumn: 'span 2' }}><strong>Notes:</strong> {selectedOrder.notes}</div>}
+                            </div>
+
+                            <table className="data-table" style={{ fontSize: 'var(--font-size-sm)' }}>
+                                <thead>
+                                    <tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+                                </thead>
+                                <tbody>
+                                    {selectedOrder.items?.map((item, i) => (
+                                        <tr key={i}>
+                                            <td className="cell-bold">{item.productName || item.productId?.name || '—'}</td>
+                                            <td>{item.quantity}</td>
+                                            <td>{item.priceAtPurchase}</td>
+                                            <td className="cell-bold">{(item.quantity * item.priceAtPurchase).toFixed(2)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+
+                            <div style={{ marginTop: 'var(--space-4)', fontSize: 'var(--font-size-md)', lineHeight: 2.2 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Subtotal:</span><span>{selectedOrder.subtotal?.toFixed(2)}</span></div>
+                                {selectedOrder.discountValue > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-danger)' }}><span>Discount:</span><span>-{(selectedOrder.subtotal - selectedOrder.totalAmount).toFixed(2)}</span></div>}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'var(--font-weight-bold)', fontSize: 'var(--font-size-lg)', borderTop: '2px solid var(--color-border)', paddingTop: 'var(--space-2)' }}>
+                                    <span>Total:</span><span>{formatCurrency(selectedOrder.totalAmount)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default OrdersHistory;

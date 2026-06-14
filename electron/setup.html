@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <title>إعداد لولو فارما</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .card {
+            width: 100%;
+            max-width: 460px;
+            background: #fff;
+            color: #1e293b;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 20px 50px rgba(0,0,0,.35);
+        }
+        h1 { font-size: 22px; margin-bottom: 8px; color: #0f766e; }
+        p { font-size: 14px; color: #64748b; margin-bottom: 20px; line-height: 1.6; }
+        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+        input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 14px;
+        }
+        input:focus { outline: 2px solid #0d9488; border-color: #0d9488; }
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #0d9488;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button:hover { background: #0f766e; }
+        button:disabled { opacity: .6; cursor: not-allowed; }
+        .hint { font-size: 12px; color: #94a3b8; margin-top: -8px; margin-bottom: 14px; }
+        .error { color: #dc2626; font-size: 13px; min-height: 20px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>مرحباً بك في لولو فارما</h1>
+        <p>إعداد لمرة واحدة فقط. أدخل بيانات الاتصال بقاعدة البيانات ثم اضغط حفظ وتشغيل.</p>
+        <div class="error" id="error"></div>
+        <label for="databaseUrl">رابط قاعدة البيانات (PostgreSQL)</label>
+        <input id="databaseUrl" type="text" placeholder="postgresql://user:password@localhost:5432/pharmacy" />
+        <p class="hint">مثال: postgresql://postgres:1234@localhost:5432/lulu_pharma</p>
+        <label for="jwtSecret">مفتاح الأمان (اختياري)</label>
+        <input id="jwtSecret" type="password" placeholder="يُولَّد تلقائياً إن تُرك فارغاً" />
+        <button id="saveBtn">حفظ وتشغيل النظام</button>
+    </div>
+    <script>
+        const errorEl = document.getElementById('error');
+        const saveBtn = document.getElementById('saveBtn');
+
+        saveBtn.addEventListener('click', async () => {
+            errorEl.textContent = '';
+            const databaseUrl = document.getElementById('databaseUrl').value.trim();
+            const jwtSecret = document.getElementById('jwtSecret').value.trim();
+
+            if (!databaseUrl) {
+                errorEl.textContent = 'رابط قاعدة البيانات مطلوب.';
+                return;
+            }
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'جاري التشغيل...';
+
+            try {
+                await window.desktopApi.saveConfig({
+                    databaseUrl,
+                    jwtSecret: jwtSecret || `lulu-${Date.now()}-${Math.random().toString(36).slice(2)}`
+                });
+                await window.desktopApi.launchApp();
+            } catch (err) {
+                errorEl.textContent = err.message || 'حدث خطأ أثناء الحفظ.';
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'حفظ وتشغيل النظام';
+            }
+        });
+    </script>
+</body>
+</html>
