@@ -5,6 +5,8 @@ import { getId } from '../../utils/getId';
 import PageHeader from '../../components/common/PageHeader';
 import DataTable from '../../components/common/DataTable';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import Button from '../../components/common/Button';
+import InputField from '../../components/common/InputField';
 import { FaMoneyCheckAlt, FaUsers, FaCalculator, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
 
 const Payroll = () => {
@@ -52,23 +54,23 @@ const Payroll = () => {
         { key: 'name', label: 'Employee', render: (val) => <span className="cell-bold">{val}</span> },
         {
             key: 'role', label: 'Role', width: 120,
-            render: (val) => <span className={`badge ${val === 'admin' ? 'badge-primary' : 'badge-success'}`}>{val === 'admin' ? 'Admin' : 'Pharmacist'}</span>
+            render: (val) => <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] ${val === 'admin' ? 'badge-primary' : 'badge-success'}`}>{val === 'admin' ? 'Admin' : 'Pharmacist'}</span>
         },
         { key: 'email', label: 'Email', render: (val) => <span className="text-muted">{val}</span> },
         {
-            key: 'monthlyHourlyRate', label: 'Hourly Rate (AED)', width: 180,
+            key: 'monthlyHourlyRate', label: 'Hourly Rate (EGP)', width: 180,
             render: (val, row) => {
                 const id = getId(row);
                 if (editingRate === id) {
                     return (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <input type="number" min="0" step="0.01" value={rateValue} onChange={e => setRateValue(e.target.value)}
-                                className="form-input" style={{ width: 100, padding: '6px 8px' }} autoFocus />
-                            <span className="text-sm text-muted">AED</span>
+                                className="w-full px-3.5 py-2.5 text-sm text-slate-900 bg-white border-[1.5px] border-slate-200 rounded-md outline-none transition-all hover:border-slate-300 focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/15" style={{ width: 100, padding: '6px 8px' }} autoFocus />
+                            <span className="text-sm text-muted">EGP</span>
                         </div>
                     );
                 }
-                return <span style={{ fontWeight: 700, color: 'var(--color-primary)', fontSize: 'var(--font-size-lg)' }}>{(val || 0).toFixed(2)} AED</span>;
+                return <span style={{ fontWeight: 700, color: 'var(--color-primary)', fontSize: 'var(--font-size-lg)' }}>{(val || 0).toFixed(2)} EGP</span>;
             }
         },
         {
@@ -78,12 +80,12 @@ const Payroll = () => {
                 if (editingRate === id) {
                     return (
                         <div style={{ display: 'flex', gap: 4 }}>
-                            <button className="btn btn-success btn-icon-sm" onClick={() => saveRate(id)}><FaSave size={11} /></button>
-                            <button className="btn btn-danger btn-icon-sm" onClick={() => setEditingRate(null)}><FaTimes size={11} /></button>
+                            <Button variant="success" size="icon" onClick={() => saveRate(id)}><FaSave size={11} /></Button>
+                            <Button variant="danger" size="icon" onClick={() => setEditingRate(null)}><FaTimes size={11} /></Button>
                         </div>
                     );
                 }
-                return <button className="btn btn-ghost btn-icon-sm" onClick={() => startEditRate(row)}><FaEdit size={11} /></button>;
+                return <Button variant="ghost" size="icon" onClick={() => startEditRate(row)}><FaEdit size={11} /></Button>;
             }
         },
     ];
@@ -92,17 +94,17 @@ const Payroll = () => {
         { key: 'name', label: 'Employee', render: (val) => <span className="cell-bold">{val}</span> },
         {
             key: 'role', label: 'Role', width: 120,
-            render: (val) => <span className={`badge ${val === 'admin' ? 'badge-primary' : 'badge-success'}`}>{val === 'admin' ? 'Admin' : 'Pharmacist'}</span>
+            render: (val) => <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] ${val === 'admin' ? 'badge-primary' : 'badge-success'}`}>{val === 'admin' ? 'Admin' : 'Pharmacist'}</span>
         },
         { key: 'workingDays', label: 'Working Days', width: 120, render: (val) => <span className="cell-bold">{val} days</span> },
         { key: 'totalHours', label: 'Total Hours', width: 120, render: (val) => <span className="cell-bold">{val.toFixed(2)} hrs</span> },
-        { key: 'monthlyHourlyRate', label: 'Rate', width: 100, render: (val) => <span className="text-muted">{val.toFixed(2)} AED</span> },
+        { key: 'monthlyHourlyRate', label: 'Rate', width: 100, render: (val) => <span className="text-muted">{val.toFixed(2)} EGP</span> },
         {
             key: 'formula', label: 'Formula', width: 180, sortable: false, noExport: true,
             render: (_, row) => <span className="cell-mono">({row.totalHours.toFixed(1)} / 26) × {row.monthlyHourlyRate.toFixed(0)}</span>
         },
         {
-            key: 'calculatedSalary', label: 'Salary (AED)', width: 140,
+            key: 'calculatedSalary', label: 'Salary (EGP)', width: 140,
             render: (val) => <span style={{ fontWeight: 800, fontSize: 'var(--font-size-lg)', color: 'var(--color-primary)' }}>{val.toFixed(2)}</span>
         },
     ];
@@ -117,7 +119,7 @@ const Payroll = () => {
 
             {/* Employee Rates */}
             <div style={{ marginBottom: 'var(--space-6)' }} id="employee-rates">
-                <h3 className="section-title" style={{ marginBottom: 'var(--space-2)' }}>
+                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2" style={{ marginBottom: 'var(--space-2)' }}>
                     <FaUsers color="var(--color-primary)" /> Employee Hourly Rates
                 </h3>
                 <p className="text-sm text-muted" style={{ marginBottom: 'var(--space-4)' }}>
@@ -135,31 +137,35 @@ const Payroll = () => {
 
             {/* Payroll Calculation */}
             <div id="payroll-calculation">
-                <h3 className="section-title" style={{ marginBottom: 'var(--space-4)' }}>
+                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2" style={{ marginBottom: 'var(--space-4)' }}>
                     <FaCalculator color="var(--color-primary)" /> Calculate Payroll
                 </h3>
 
                 <div className="filter-bar" style={{ marginBottom: 'var(--space-5)' }}>
-                    <div className="form-group">
-                        <label className="form-label">Month</label>
-                        <select value={month} onChange={e => setMonth(Number(e.target.value))} className="form-select" style={{ width: 160 }}>
-                            {monthNames.map((name, i) => <option key={i} value={i + 1}>{name}</option>)}
-                        </select>
-                    </div>
-                    <div className="form-group">
-                        <label className="form-label">Year</label>
-                        <select value={year} onChange={e => setYear(Number(e.target.value))} className="form-select" style={{ width: 100 }}>
-                            {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map(y => <option key={y} value={y}>{y}</option>)}
-                        </select>
-                    </div>
-                    <button onClick={handleCalculate} disabled={calculating} className="btn btn-primary" style={{ alignSelf: 'flex-end' }} id="btn-calculate-payroll">
+                    <InputField 
+                        type="select" 
+                        label="Month" 
+                        value={month} 
+                        onChange={e => setMonth(Number(e.target.value))} 
+                        style={{ width: 160 }}
+                        options={monthNames.map((name, i) => ({ value: i + 1, label: name }))}
+                    />
+                    <InputField 
+                        type="select" 
+                        label="Year" 
+                        value={year} 
+                        onChange={e => setYear(Number(e.target.value))} 
+                        style={{ width: 100 }}
+                        options={[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map(y => ({ value: y, label: y }))}
+                    />
+                    <Button onClick={handleCalculate} disabled={calculating} style={{ alignSelf: 'flex-end' }} id="btn-calculate-payroll">
                         <FaCalculator size={13} /> {calculating ? 'Calculating...' : 'Calculate'}
-                    </button>
+                    </Button>
                 </div>
 
                 {payroll && (
                     <>
-                        <div className="badge badge-info" style={{ marginBottom: 'var(--space-4)', fontSize: 'var(--font-size-md)', padding: '8px 16px' }}>
+                        <div className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] bg-cyan-100 text-cyan-800" style={{ marginBottom: 'var(--space-4)', fontSize: 'var(--font-size-md)', padding: '8px 16px' }}>
                             Payroll for {monthNames[payroll.month - 1]} {payroll.year}
                         </div>
                         <DataTable
@@ -171,12 +177,12 @@ const Payroll = () => {
                             compact
                             exportFilename={`payroll_${payroll.year}_${payroll.month}.csv`}
                         />
-                        <div className="card card-body" style={{
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md p-6" style={{
                             marginTop: 'var(--space-4)', display: 'flex', justifyContent: 'space-between',
                             background: 'var(--color-primary-lighter)', borderLeft: '4px solid var(--color-primary)',
                         }}>
                             <span style={{ fontWeight: 700, fontSize: 'var(--font-size-lg)', color: 'var(--color-primary-dark)' }}>Total Payroll</span>
-                            <span style={{ fontWeight: 800, fontSize: 'var(--font-size-xl)', color: 'var(--color-primary-dark)' }}>{payroll.totalPayroll.toFixed(2)} AED</span>
+                            <span style={{ fontWeight: 800, fontSize: 'var(--font-size-xl)', color: 'var(--color-primary-dark)' }}>{payroll.totalPayroll.toFixed(2)} EGP</span>
                         </div>
                     </>
                 )}

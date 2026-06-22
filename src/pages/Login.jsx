@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, PHARMACY_NAME, APP_VERSION } from '../utils/constants';
 import { FaPills, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { sanitizeInput, validateEmail } from '../utils/security';
 
 const Login = () => {
     const { login } = useAuth();
@@ -16,9 +17,13 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!email || !password) { toast.error('Please fill in all fields'); return; }
+
+        const safeEmail = sanitizeInput(email);
+        if (!validateEmail(safeEmail)) { toast.error('Please enter a valid email address'); return; }
+
         setLoading(true);
         try {
-            const user = await login(email, password);
+            const user = await login(safeEmail, password);
             toast.success(`Welcome back, ${user.name}`);
             if (user.role === 'customer') {
                 navigate('/');
@@ -129,21 +134,21 @@ const Login = () => {
                     </div>
 
                     <form onSubmit={handleSubmit}>
-                        <div className="form-group" style={{ marginBottom: 'var(--space-5)' }}>
-                            <label className="form-label">Email Address</label>
+                        <div className="flex flex-col gap-1" style={{ marginBottom: 'var(--space-5)' }}>
+                            <label className="text-sm font-semibold text-slate-600 tracking-[0.01em]">Email Address</label>
                             <input
                                 type="email"
                                 required
                                 value={email}
                                 onChange={e => setEmail(e.target.value)}
                                 placeholder="you@example.com"
-                                className="form-input"
+                                className="w-full px-3.5 py-2.5 text-sm text-slate-900 bg-white border-[1.5px] border-slate-200 rounded-md outline-none transition-all hover:border-slate-300 focus:border-teal-600 focus:ring-[3px] focus:ring-teal-600/15"
                                 autoFocus
                                 style={{ padding: '12px 16px' }}
                             />
                         </div>
-                        <div className="form-group" style={{ marginBottom: 'var(--space-3)' }}>
-                            <label className="form-label">Password</label>
+                        <div className="flex flex-col gap-1" style={{ marginBottom: 'var(--space-3)' }}>
+                            <label className="text-sm font-semibold text-slate-600 tracking-[0.01em]">Password</label>
                             <div style={{ position: 'relative' }}>
                                 <input
                                     type={showPassword ? 'text' : 'password'}
@@ -151,7 +156,7 @@ const Login = () => {
                                     value={password}
                                     onChange={e => setPassword(e.target.value)}
                                     placeholder="••••••••"
-                                    className="form-input"
+                                    className="w-full px-3.5 py-2.5 text-sm text-slate-900 bg-white border-[1.5px] border-slate-200 rounded-md outline-none transition-all hover:border-slate-300 focus:border-teal-600 focus:ring-[3px] focus:ring-teal-600/15"
                                     style={{ padding: '12px 16px', paddingRight: 44 }}
                                 />
                                 <button
@@ -198,11 +203,19 @@ const Login = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="btn btn-primary btn-lg"
+                            className="btn-primary"
                             style={{
                                 width: '100%',
                                 padding: '14px',
                                 fontSize: 'var(--font-size-lg)',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                opacity: loading ? 0.7 : 1,
+                                background: 'linear-gradient(135deg, var(--color-primary) 0%, #7c3aed 100%)',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: 'var(--radius-lg)'
                             }}
                         >
                             {loading ? (

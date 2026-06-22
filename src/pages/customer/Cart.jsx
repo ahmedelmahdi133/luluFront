@@ -1,119 +1,156 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
-import { COLORS } from '../../utils/constants';
-import { FaTrash, FaPlus, FaMinus, FaShoppingBag, FaPills } from 'react-icons/fa';
+import { FaTrash, FaPlus, FaMinus, FaShoppingBag, FaPills, FaArrowRight, FaShieldAlt } from 'react-icons/fa';
 
 const Cart = () => {
     const { cartItems, updateQuantity, removeFromCart, clearCart, cartTotal } = useCart();
     const { user } = useAuth();
     const navigate = useNavigate();
-    const C = COLORS.customerPrimary;
 
     if (cartItems.length === 0) {
         return (
-            <div style={{ maxWidth: 600, margin: '0 auto', padding: '80px 20px', textAlign: 'center' }}>
-                <FaShoppingBag size={60} color="#cbd5e1" />
-                <h2 style={{ color: '#64748b', marginTop: 16 }}>السلة فارغة</h2>
-                <p style={{ color: '#94a3b8', marginBottom: 24 }}>تصفح المتجر وأضف منتجاتك المفضلة</p>
-                <Link to="/store" style={{
-                    display: 'inline-block', padding: '12px 28px', backgroundColor: C, color: 'white',
-                    borderRadius: 10, textDecoration: 'none', fontWeight: 600
-                }}>تصفح المتجر</Link>
+            <div className="min-h-[70vh] bg-slate-50 flex items-center justify-center px-4" dir="rtl">
+                <div className="max-w-md w-full bg-white rounded-3xl shadow-sm border border-slate-100 p-10 text-center">
+                    <div className="w-24 h-24 bg-teal-50 rounded-full flex justify-center items-center mx-auto mb-6">
+                        <FaShoppingBag size={40} className="text-teal-500" />
+                    </div>
+                    <h2 className="text-slate-800 text-2xl font-black mb-2">سلة المشتريات فارغة</h2>
+                    <p className="text-slate-500 mb-8 font-medium">يبدو أنك لم تقم بإضافة أي منتجات إلى السلة بعد.</p>
+                    <Link to="/store" className="flex items-center justify-center gap-2 w-full py-4 bg-teal-600 hover:bg-teal-700 text-white rounded-xl no-underline font-bold transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5">
+                        العودة للتسوق <FaArrowRight size={14} />
+                    </Link>
+                </div>
             </div>
         );
     }
 
     return (
-        <div style={{ maxWidth: 900, margin: '0 auto', padding: '30px 20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <h2 style={{ fontSize: 24, fontWeight: 700, color: '#1e293b', margin: 0 }}>سلة المشتريات ({cartItems.length})</h2>
-                <button onClick={clearCart} style={{
-                    padding: '8px 16px', backgroundColor: '#fee2e2', color: '#dc2626',
-                    border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600
-                }}>تفريغ السلة</button>
-            </div>
-
-            <div style={{ display: 'flex', gap: 24 }}>
-                <div style={{ flex: 1 }}>
-                    {cartItems.map(item => (
-                        <div key={item._id} style={{
-                            display: 'flex', gap: 16, backgroundColor: 'white', borderRadius: 14,
-                            padding: 16, marginBottom: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                            alignItems: 'center'
-                        }}>
-                            <div style={{
-                                width: 80, height: 80, borderRadius: 10, backgroundColor: '#f1f5f9',
-                                display: 'flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0
-                            }}>
-                                {item.image ? (
-                                    <img src={item.image} alt={item.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'cover', borderRadius: 10 }} />
-                                ) : (
-                                    <FaPills size={24} color="#cbd5e1" />
-                                )}
-                            </div>
-
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontWeight: 600, color: '#1e293b', fontSize: 15, marginBottom: 4 }}>{item.name}</div>
-                                <div style={{ color: C, fontWeight: 700, fontSize: 16 }}>{item.sellingPrice} ج.م</div>
-                            </div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 0, border: '1px solid #e2e8f0', borderRadius: 8, overflow: 'hidden' }}>
-                                <button onClick={() => updateQuantity(item._id, item.quantity - 1)} style={qtyBtn}>
-                                    {item.quantity === 1 ? <FaTrash size={10} color="#dc2626" /> : <FaMinus size={10} />}
-                                </button>
-                                <span style={{ padding: '6px 14px', fontWeight: 600, fontSize: 14, minWidth: 24, textAlign: 'center' }}>{item.quantity}</span>
-                                <button onClick={() => updateQuantity(item._id, item.quantity + 1)} style={qtyBtn}><FaPlus size={10} /></button>
-                            </div>
-
-                            <div style={{ fontWeight: 700, color: '#1e293b', fontSize: 16, minWidth: 80, textAlign: 'left' }}>
-                                {(item.sellingPrice * item.quantity).toFixed(2)}
-                            </div>
-
-                            <button onClick={() => removeFromCart(item._id)} style={{
-                                padding: 8, backgroundColor: '#fee2e2', color: '#dc2626',
-                                border: 'none', borderRadius: 6, cursor: 'pointer'
-                            }}><FaTrash size={12} /></button>
-                        </div>
-                    ))}
+        <div className="min-h-screen bg-slate-50 pt-8 pb-20" dir="rtl">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 gap-4">
+                    <div>
+                        <h2 className="text-3xl font-black text-slate-800 m-0 mb-1">سلة المشتريات</h2>
+                        <p className="text-slate-500 font-medium m-0">لديك {cartItems.length} منتجات في السلة</p>
+                    </div>
+                    <button 
+                        onClick={clearCart} 
+                        className="flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-red-50 text-red-500 border border-slate-200 hover:border-red-100 rounded-xl cursor-pointer text-sm font-bold transition-all shadow-sm"
+                    >
+                        <FaTrash size={12} /> تفريغ السلة
+                    </button>
                 </div>
 
-                <div style={{
-                    width: 300, backgroundColor: 'white', borderRadius: 14,
-                    padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                    position: 'sticky', top: 84, height: 'fit-content'
-                }}>
-                    <h3 style={{ margin: '0 0 16px', fontSize: 16, color: '#1e293b' }}>ملخص الطلب</h3>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 14, color: '#64748b' }}>
-                        <span>عدد المنتجات</span><span>{cartItems.length}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, fontSize: 14, color: '#64748b' }}>
-                        <span>إجمالي القطع</span><span>{cartItems.reduce((s, i) => s + i.quantity, 0)}</span>
-                    </div>
-                    <div style={{ borderTop: '2px solid #f1f5f9', paddingTop: 14, display: 'flex', justifyContent: 'space-between', fontSize: 20, fontWeight: 700, color: '#1e293b', marginBottom: 20 }}>
-                        <span>الإجمالي</span><span>{cartTotal.toFixed(2)} ج.م</span>
+                <div className="flex flex-col lg:flex-row gap-8 items-start">
+                    {/* Cart Items */}
+                    <div className="flex-1 w-full flex flex-col gap-4">
+                        {cartItems.map(item => (
+                            <div key={item.id} className="group flex flex-col sm:flex-row gap-5 bg-white rounded-2xl p-5 shadow-sm border border-slate-100 items-center transition-all hover:shadow-md hover:border-teal-100">
+                                {/* Image */}
+                                <div className="w-24 h-24 rounded-xl bg-slate-50 flex justify-center items-center shrink-0 overflow-hidden relative border border-slate-100">
+                                    {item.image ? (
+                                        <img src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply p-2 group-hover:scale-110 transition-transform duration-500" />
+                                    ) : (
+                                        <FaPills size={28} className="text-slate-300" />
+                                    )}
+                                </div>
+
+                                {/* Details */}
+                                <div className="flex-1 min-w-0 text-center sm:text-right w-full sm:w-auto">
+                                    <div className="font-bold text-slate-800 text-[17px] mb-1.5 line-clamp-2">{item.name}</div>
+                                    <div className="text-teal-600 font-black text-lg">{item.sellingPrice} <span className="text-sm font-semibold text-teal-600/70">ج.م</span></div>
+                                </div>
+
+                                {/* Controls */}
+                                <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-6 sm:gap-8 mt-4 sm:mt-0 border-t sm:border-t-0 border-slate-100 pt-4 sm:pt-0">
+                                    
+                                    {/* Quantity */}
+                                    <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shrink-0" dir="ltr">
+                                        <button 
+                                            onClick={() => updateQuantity(item.id, item.quantity - 1)} 
+                                            className="w-10 h-10 flex items-center justify-center bg-white hover:bg-red-50 hover:text-red-500 border-none cursor-pointer text-slate-600 transition-colors"
+                                        >
+                                            {item.quantity === 1 ? <FaTrash size={12} /> : <FaMinus size={12} />}
+                                        </button>
+                                        <span className="w-12 text-center font-bold text-[15px] bg-slate-50">
+                                            {item.quantity}
+                                        </span>
+                                        <button 
+                                            onClick={() => updateQuantity(item.id, item.quantity + 1)} 
+                                            className="w-10 h-10 flex items-center justify-center bg-white hover:bg-teal-50 hover:text-teal-600 border-none cursor-pointer text-slate-600 transition-colors"
+                                        >
+                                            <FaPlus size={12} />
+                                        </button>
+                                    </div>
+
+                                    {/* Total Price & Delete */}
+                                    <div className="flex items-center gap-4 shrink-0">
+                                        <div className="font-black text-slate-800 text-xl min-w-[5rem] text-left hidden sm:block">
+                                            {(item.sellingPrice * item.quantity).toFixed(2)}
+                                        </div>
+                                        <button 
+                                            onClick={() => removeFromCart(item.id)} 
+                                            className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 hover:bg-red-50 text-slate-400 hover:text-red-500 hover:border-red-100 rounded-xl cursor-pointer transition-all shadow-sm"
+                                            title="حذف المنتج"
+                                        >
+                                            <FaTrash size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
 
-                    {user ? (
-                        <button onClick={() => navigate('/checkout')} style={{
-                            width: '100%', padding: 14, backgroundColor: C, color: 'white',
-                            border: 'none', borderRadius: 10, cursor: 'pointer', fontSize: 16, fontWeight: 700
-                        }}>إتمام الطلب</button>
-                    ) : (
-                        <div style={{ textAlign: 'center' }}>
-                            <p style={{ fontSize: 13, color: '#94a3b8', marginBottom: 10 }}>سجل دخولك لإتمام الطلب</p>
-                            <Link to="/login" style={{
-                                display: 'block', padding: 14, backgroundColor: C, color: 'white',
-                                borderRadius: 10, textDecoration: 'none', fontSize: 16, fontWeight: 700, textAlign: 'center'
-                            }}>تسجيل الدخول</Link>
+                    {/* Order Summary */}
+                    <div className="w-full lg:w-[360px] shrink-0">
+                        <div className="bg-white rounded-3xl p-7 shadow-sm border border-slate-100 lg:sticky lg:top-24">
+                            <h3 className="m-0 mb-6 text-xl font-black text-slate-800 border-b border-slate-100 pb-4">ملخص الطلب</h3>
+                            
+                            <div className="space-y-4 mb-6">
+                                <div className="flex justify-between items-center text-[15px] font-medium text-slate-500">
+                                    <span>عدد المنتجات المختلفة</span>
+                                    <span className="text-slate-800 font-bold bg-slate-50 px-3 py-1 rounded-lg">{cartItems.length}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-[15px] font-medium text-slate-500">
+                                    <span>إجمالي الكمية</span>
+                                    <span className="text-slate-800 font-bold bg-slate-50 px-3 py-1 rounded-lg">{cartItems.reduce((s, i) => s + i.quantity, 0)}</span>
+                                </div>
+                            </div>
+                            
+                            <div className="bg-slate-50 rounded-2xl p-5 mb-8 border border-slate-100">
+                                <div className="flex justify-between items-end text-xl font-black text-slate-800">
+                                    <span className="text-base text-slate-500 font-bold">الإجمالي الكلي</span>
+                                    <span className="text-2xl text-teal-600">{cartTotal.toFixed(2)} <span className="text-sm">ج.م</span></span>
+                                </div>
+                            </div>
+
+                            {user ? (
+                                <button 
+                                    onClick={() => navigate('/checkout')} 
+                                    className="flex items-center justify-center gap-2 w-full py-4 bg-teal-600 hover:bg-teal-700 text-white border-none rounded-2xl cursor-pointer text-[17px] font-bold shadow-md hover:shadow-xl hover:shadow-teal-600/20 transition-all hover:-translate-y-0.5"
+                                >
+                                    متابعة الدفع
+                                </button>
+                            ) : (
+                                <div className="text-center p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-slate-400">
+                                        <FaShieldAlt size={20} />
+                                    </div>
+                                    <p className="text-sm font-bold text-slate-600 mb-4">يرجى تسجيل الدخول لإتمام طلبك بأمان</p>
+                                    <Link 
+                                        to="/login" 
+                                        className="block py-3.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl no-underline text-base font-bold transition-all shadow-md"
+                                    >
+                                        تسجيل الدخول
+                                    </Link>
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </div>
                 </div>
             </div>
         </div>
     );
 };
-
-const qtyBtn = { padding: '8px 10px', backgroundColor: '#f8fafc', border: 'none', cursor: 'pointer' };
 
 export default Cart;

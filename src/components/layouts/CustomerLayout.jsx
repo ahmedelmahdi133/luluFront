@@ -27,36 +27,25 @@ const CustomerLayout = ({ children }) => {
     const C = COLORS.customerPrimary;
 
     return (
-        <div style={{ minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', backgroundColor: '#f8fafc' }}>
-            <header style={{
-                backgroundColor: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-                position: 'sticky', top: 0, zIndex: 100
-            }}>
-                <div style={{
-                    maxWidth: 1200, margin: '0 auto', padding: '0 20px',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    height: 64
-                }}>
-                    <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{
-                            width: 36, height: 36, borderRadius: 10, backgroundColor: C,
-                            display: 'flex', justifyContent: 'center', alignItems: 'center',
-                            color: 'white', fontWeight: 800, fontSize: 16
-                        }}>J</div>
-                        <span style={{ fontSize: 18, fontWeight: 700, color: '#1e293b' }}>{PHARMACY_NAME}</span>
+        <div className="min-h-screen font-sans bg-slate-50/50">
+            <header className="bg-white/80 backdrop-blur-xl shadow-sm sticky top-0 z-[100] border-b border-slate-200/50">
+                <div className="max-w-[1200px] mx-auto px-5 flex justify-between items-center h-[72px]">
+                    <Link to="/" className="flex items-center gap-3 no-underline group">
+                        <div className="w-10 h-10 rounded-2xl flex justify-center items-center text-white font-extrabold text-lg shadow-md shadow-teal-600/20 bg-gradient-to-br from-teal-500 to-teal-700 transition-transform group-hover:scale-105">
+                            L
+                        </div>
+                        <span className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 tracking-tight">{PHARMACY_NAME}</span>
                     </Link>
 
-                    <nav style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <NavItem to="/" icon={FaHome} label="Home" color={C} />
-                        <NavItem to="/store" icon={FaStore} label="Store" color={C} />
+                    <nav className="flex items-center gap-2">
+                        <NavItem to="/" icon={FaHome} label="Home" color="#0f766e" />
+                        <NavItem to="/store" icon={FaStore} label="Store" color="#0f766e" />
+                        
+                        <div className="w-px h-6 bg-slate-200 mx-2"></div>
+
                         <button
                             onClick={handleOpenDesktopApp}
-                            style={{
-                                display: 'flex', alignItems: 'center', gap: 6,
-                                padding: '8px 14px', borderRadius: 8, border: 'none',
-                                textDecoration: 'none', color: C, fontWeight: 600,
-                                backgroundColor: `${C}10`, fontSize: 14, cursor: 'pointer'
-                            }}
+                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-none font-bold text-[13px] cursor-pointer transition-all hover:-translate-y-0.5 shadow-sm text-teal-700 bg-teal-50 hover:bg-teal-100 hover:shadow-teal-100"
                             title="Open Desktop App"
                         >
                             <FaDesktop size={15} />
@@ -64,52 +53,33 @@ const CustomerLayout = ({ children }) => {
                         </button>
 
                         {user && (
-                            <NavItem to="/prescriptions" icon={FaFileMedical} label="Prescriptions" color={C} />
+                            <NavItem to="/prescriptions" icon={FaFileMedical} label="Prescriptions" color="#0f766e" />
                         )}
 
-                        <Link to="/cart" style={{
-                            position: 'relative', display: 'flex', alignItems: 'center', gap: 6,
-                            padding: '8px 14px', borderRadius: 8, textDecoration: 'none',
-                            color: '#64748b', fontSize: 14, transition: 'all 0.2s'
-                        }}>
+                        <Link to="/cart" className="relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-slate-600 text-[13px] font-bold transition-all hover:bg-slate-100 hover:text-slate-900 no-underline ml-1">
                             <FaShoppingCart size={16} />
                             <span>Cart</span>
                             {cartCount > 0 && (
-                                <span style={{
-                                    position: 'absolute', top: 2, right: -4,
-                                    backgroundColor: '#dc2626', color: 'white',
-                                    borderRadius: '50%', width: 18, height: 18,
-                                    display: 'flex', justifyContent: 'center', alignItems: 'center',
-                                    fontSize: 10, fontWeight: 700
-                                }}>{cartCount}</span>
+                                <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex justify-center items-center text-[10px] font-black shadow-sm shadow-red-500/30 border-2 border-white">
+                                    {cartCount}
+                                </span>
                             )}
                         </Link>
 
                         {user ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 8 }}>
-                                <NavItem to="/my-orders" icon={FaClipboardList} label="My Orders" color={C} />
-                                <NavItem to="/profile" icon={FaUser} label={user.name?.split(' ')[0]} color={C} />
-                                <button onClick={handleLogout} style={{
-                                    padding: '8px 12px', backgroundColor: 'transparent', color: '#dc2626',
-                                    border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 14,
-                                    display: 'flex', alignItems: 'center', gap: 4
-                                }}>
-                                    <FaSignOutAlt size={14} />
+                            <div className="flex items-center gap-2 ml-4 pl-4 border-l border-slate-200">
+                                <NavItem to="/my-orders" icon={FaClipboardList} label="My Orders" color="#0f766e" />
+                                <NavItem to="/profile" icon={FaUser} label={user.name?.split(' ')[0]} color="#0f766e" />
+                                <button onClick={handleLogout} className="w-10 h-10 flex justify-center items-center bg-white text-red-500 border border-slate-200 rounded-xl cursor-pointer hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all ml-1">
+                                    <FaSignOutAlt size={16} />
                                 </button>
                             </div>
                         ) : (
-                            <div style={{ display: 'flex', gap: 8, marginLeft: 8 }}>
-                                <Link to="/login" style={{
-                                    padding: '8px 18px', backgroundColor: C, color: 'white',
-                                    textDecoration: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600
-                                }}>
+                            <div className="flex gap-3 ml-4 pl-4 border-l border-slate-200">
+                                <Link to="/login" className="px-5 py-2.5 text-white no-underline rounded-xl text-[14px] font-bold transition-all shadow-md shadow-teal-600/20 bg-gradient-to-r from-teal-600 to-teal-500 hover:shadow-lg hover:-translate-y-0.5">
                                     Login
                                 </Link>
-                                <Link to="/register" style={{
-                                    padding: '8px 18px', backgroundColor: 'white', color: C,
-                                    textDecoration: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600,
-                                    border: `1px solid ${C}`
-                                }}>
+                                <Link to="/register" className="px-5 py-2.5 bg-white no-underline rounded-xl text-[14px] font-bold transition-all hover:bg-slate-50 text-teal-700 border border-teal-200 hover:border-teal-300">
                                     Sign Up
                                 </Link>
                             </div>
@@ -118,28 +88,24 @@ const CustomerLayout = ({ children }) => {
                 </div>
             </header>
 
-            <main style={{ minHeight: 'calc(100vh - 64px - 60px)' }}>
+            <main className="min-h-[calc(100vh-136px)]">
                 {children}
             </main>
 
-            <footer style={{
-                backgroundColor: '#1e293b', color: '#94a3b8', textAlign: 'center',
-                padding: '18px 20px', fontSize: 13
-            }}>
+            <footer className="bg-white border-t border-slate-200 text-slate-500 font-medium text-center py-6 px-5 text-[13px]">
                 {PHARMACY_NAME} &copy; {new Date().getFullYear()} - All Rights Reserved
             </footer>
         </div>
     );
 };
 
-const NavItem = ({ to, icon: Icon, label, color }) => (
-    <NavLink to={to} end style={({ isActive }) => ({
-        display: 'flex', alignItems: 'center', gap: 6,
-        padding: '8px 14px', borderRadius: 8, textDecoration: 'none',
-        color: isActive ? color : '#64748b', fontWeight: isActive ? 600 : 400,
-        backgroundColor: isActive ? `${color}10` : 'transparent', fontSize: 14
-    })}>
-        <Icon size={15} />
+const NavItem = ({ to, icon: Icon, label }) => (
+    <NavLink 
+        to={to} 
+        end 
+        className={({ isActive }) => `flex items-center gap-2 px-4 py-2.5 rounded-xl no-underline text-[13px] transition-all ${isActive ? 'font-bold bg-teal-50 text-teal-700' : 'text-slate-600 font-semibold hover:bg-slate-100 hover:text-slate-900'}`}
+    >
+        <Icon size={16} />
         <span>{label}</span>
     </NavLink>
 );

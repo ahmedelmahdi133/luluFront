@@ -6,6 +6,8 @@ import { getId } from '../../utils/getId';
 import PageHeader from '../../components/common/PageHeader';
 import DataTable from '../../components/common/DataTable';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import Button from '../../components/common/Button';
+import InputField from '../../components/common/InputField';
 import { FaSignInAlt, FaSignOutAlt, FaClock, FaCalendarAlt, FaUserClock, FaPlus, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 const Attendance = () => {
@@ -62,7 +64,7 @@ const Attendance = () => {
     const getStatusBadge = (status) => {
         const map = { present: 'badge-success', late: 'badge-warning', absent: 'badge-danger', half_day: 'badge-info' };
         const labels = { present: 'Present', late: 'Late', absent: 'Absent', half_day: 'Half Day' };
-        return <span className={`badge badge-dot ${map[status] || 'badge-success'}`}>{labels[status] || 'Present'}</span>;
+        return <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] badge-dot ${map[status] || 'badge-success'}`}>{labels[status] || 'Present'}</span>;
     };
 
     if (loading) return <div className="page-wrapper"><LoadingSkeleton type="page" columns={5} /></div>;
@@ -104,7 +106,7 @@ const Attendance = () => {
             />
 
             {/* Check In/Out Section */}
-            <div className="card card-body" style={{ marginBottom: 'var(--space-6)', display: 'flex', alignItems: 'center', gap: 'var(--space-5)', flexWrap: 'wrap' }} id="attendance-status">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md p-6" style={{ marginBottom: 'var(--space-6)', display: 'flex', alignItems: 'center', gap: 'var(--space-5)', flexWrap: 'wrap' }} id="attendance-status">
                 <div style={{ flex: 1, minWidth: 200 }}>
                     <div className="text-sm text-muted" style={{ marginBottom: 'var(--space-1)' }}>Today's Status</div>
                     {!todayStatus ? (
@@ -127,18 +129,18 @@ const Attendance = () => {
                     )}
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
-                    <button onClick={handleCheckIn} disabled={!!todayStatus} className="btn btn-success btn-lg" id="btn-check-in">
+                    <Button variant="success" size="lg" onClick={handleCheckIn} disabled={!!todayStatus} id="btn-check-in">
                         <FaSignInAlt size={16} /> Check In
-                    </button>
-                    <button onClick={handleCheckOut} disabled={!checkedIn} className="btn btn-danger btn-lg" id="btn-check-out">
+                    </Button>
+                    <Button variant="danger" size="lg" onClick={handleCheckOut} disabled={!checkedIn} id="btn-check-out">
                         <FaSignOutAlt size={16} /> Check Out
-                    </button>
+                    </Button>
                 </div>
             </div>
 
             {/* My Attendance History */}
             <div style={{ marginBottom: 'var(--space-6)' }} id="my-attendance">
-                <h3 className="section-title" style={{ marginBottom: 'var(--space-4)' }}>
+                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2" style={{ marginBottom: 'var(--space-4)' }}>
                     <FaClock color="var(--color-primary)" /> My Attendance History
                 </h3>
                 <DataTable
@@ -156,68 +158,63 @@ const Attendance = () => {
             {isAdmin && (
                 <div id="admin-attendance">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
-                        <h3 className="section-title" style={{ margin: 0 }}>
+                        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2" style={{ margin: 0 }}>
                             <FaCalendarAlt color="var(--color-primary)" /> All Employees Attendance
                         </h3>
-                        <button onClick={() => setShowManual(!showManual)} className={`btn ${showManual ? 'btn-ghost' : 'btn-primary'} btn-sm`} id="btn-manual-entry">
+                        <Button variant={showManual ? 'ghost' : 'primary'} size="sm" onClick={() => setShowManual(!showManual)} id="btn-manual-entry">
                             {showManual ? 'Cancel' : <><FaPlus size={11} /> Manual Entry</>}
-                        </button>
+                        </Button>
                     </div>
 
                     {showManual && (
-                        <form onSubmit={handleManualSubmit} className="card card-body" style={{ marginBottom: 'var(--space-5)', borderLeft: '4px solid var(--color-primary)', animation: 'fadeInDown var(--transition-slow) ease' }} id="manual-attendance-form">
+                        <form onSubmit={handleManualSubmit} className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md p-6" style={{ marginBottom: 'var(--space-5)', borderLeft: '4px solid var(--color-primary)', animation: 'fadeInDown var(--transition-slow) ease' }} id="manual-attendance-form">
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-3)' }}>
-                                <div className="form-group">
-                                    <label className="form-label">Employee</label>
-                                    <select value={manualForm.employeeId} onChange={e => setManualForm(prev => ({ ...prev, employeeId: e.target.value }))} className="form-select" required>
-                                        <option value="">Select Employee</option>
-                                        {employees.map(emp => <option key={getId(emp)} value={getId(emp)}>{emp.name}</option>)}
-                                    </select>
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Date</label>
-                                    <input type="date" value={manualForm.date} onChange={e => setManualForm(prev => ({ ...prev, date: e.target.value }))} className="form-input" required />
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Check In</label>
-                                    <input type="datetime-local" value={manualForm.checkIn} onChange={e => setManualForm(prev => ({ ...prev, checkIn: e.target.value }))} className="form-input" required />
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Check Out</label>
-                                    <input type="datetime-local" value={manualForm.checkOut} onChange={e => setManualForm(prev => ({ ...prev, checkOut: e.target.value }))} className="form-input" />
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Status</label>
-                                    <select value={manualForm.status} onChange={e => setManualForm(prev => ({ ...prev, status: e.target.value }))} className="form-select">
-                                        <option value="present">Present</option>
-                                        <option value="late">Late</option>
-                                        <option value="absent">Absent</option>
-                                        <option value="half_day">Half Day</option>
-                                    </select>
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Notes</label>
-                                    <input value={manualForm.notes} onChange={e => setManualForm(prev => ({ ...prev, notes: e.target.value }))} placeholder="Optional notes" className="form-input" />
-                                </div>
+                                <InputField 
+                                    type="select" 
+                                    label="Employee" 
+                                    value={manualForm.employeeId} 
+                                    onChange={e => setManualForm(prev => ({ ...prev, employeeId: e.target.value }))} 
+                                    required
+                                    options={[{ value: '', label: 'Select Employee' }, ...employees.map(emp => ({ value: getId(emp), label: emp.name }))]}
+                                />
+                                <InputField type="date" label="Date" value={manualForm.date} onChange={e => setManualForm(prev => ({ ...prev, date: e.target.value }))} required />
+                                <InputField type="datetime-local" label="Check In" value={manualForm.checkIn} onChange={e => setManualForm(prev => ({ ...prev, checkIn: e.target.value }))} required />
+                                <InputField type="datetime-local" label="Check Out" value={manualForm.checkOut} onChange={e => setManualForm(prev => ({ ...prev, checkOut: e.target.value }))} />
+                                <InputField 
+                                    type="select" 
+                                    label="Status" 
+                                    value={manualForm.status} 
+                                    onChange={e => setManualForm(prev => ({ ...prev, status: e.target.value }))} 
+                                    options={[
+                                        { value: 'present', label: 'Present' },
+                                        { value: 'late', label: 'Late' },
+                                        { value: 'absent', label: 'Absent' },
+                                        { value: 'half_day', label: 'Half Day' }
+                                    ]}
+                                />
+                                <InputField label="Notes" value={manualForm.notes} onChange={e => setManualForm(prev => ({ ...prev, notes: e.target.value }))} placeholder="Optional notes" />
                             </div>
                             <div style={{ marginTop: 'var(--space-4)' }}>
-                                <button type="submit" className="btn btn-primary">Save Record</button>
+                                <Button type="submit">Save Record</Button>
                             </div>
                         </form>
                     )}
 
                     {/* Filters */}
                     <div className="filter-bar" style={{ marginBottom: 'var(--space-4)' }} id="attendance-filters">
-                        <select value={filterEmployee} onChange={e => setFilterEmployee(e.target.value)} className="form-select" style={{ width: 180 }}>
-                            <option value="">All Employees</option>
-                            {employees.map(emp => <option key={getId(emp)} value={getId(emp)}>{emp.name}</option>)}
-                        </select>
-                        <input type="date" value={filterStart} onChange={e => setFilterStart(e.target.value)} className="form-input" style={{ width: 160 }} placeholder="From" />
-                        <input type="date" value={filterEnd} onChange={e => setFilterEnd(e.target.value)} className="form-input" style={{ width: 160 }} placeholder="To" />
+                        <InputField 
+                            type="select" 
+                            value={filterEmployee} 
+                            onChange={e => setFilterEmployee(e.target.value)} 
+                            style={{ width: 180 }}
+                            options={[{ value: '', label: 'All Employees' }, ...employees.map(emp => ({ value: getId(emp), label: emp.name }))]}
+                        />
+                        <InputField type="date" value={filterStart} onChange={e => setFilterStart(e.target.value)} style={{ width: 160 }} placeholder="From" />
+                        <InputField type="date" value={filterEnd} onChange={e => setFilterEnd(e.target.value)} style={{ width: 160 }} placeholder="To" />
                         {(filterEmployee || filterStart || filterEnd) && (
-                            <button onClick={() => { setFilterEmployee(''); setFilterStart(''); setFilterEnd(''); }} className="btn btn-ghost btn-sm" style={{ color: 'var(--color-danger)' }}>
+                            <Button variant="ghost" size="sm" onClick={() => { setFilterEmployee(''); setFilterStart(''); setFilterEnd(''); }} style={{ color: 'var(--color-danger)' }}>
                                 Clear
-                            </button>
+                            </Button>
                         )}
                     </div>
 

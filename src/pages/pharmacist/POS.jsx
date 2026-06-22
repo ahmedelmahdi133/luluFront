@@ -9,7 +9,11 @@ import { formatCurrency } from '../../utils/formatters';
 import PaymentModal from '../../components/pos/PaymentModal';
 import HoldOrdersModal from '../../components/pos/HoldOrdersModal';
 import ThermalReceipt from '../../components/pos/ThermalReceipt';
-import { FaSearch, FaShoppingCart, FaTrash, FaPlus, FaMinus, FaPause, FaList, FaTachometerAlt, FaPrint, FaSignOutAlt, FaClock, FaPills, FaKeyboard } from 'react-icons/fa';
+import ContextMenu from '../../components/common/ContextMenu';
+import ReminderModal from '../../components/common/ReminderModal';
+import Button from '../../components/common/Button';
+import SearchInput from '../../components/common/SearchInput';
+import { FaSearch, FaShoppingCart, FaTrash, FaPlus, FaMinus, FaPause, FaList, FaTachometerAlt, FaPrint, FaSignOutAlt, FaClock, FaPills, FaKeyboard, FaEye, FaEdit, FaCalendarPlus, FaArrowDown } from 'react-icons/fa';
 
 // Load held orders from localStorage
 const loadHeldOrders = () => {
@@ -36,6 +40,8 @@ const POS = () => {
     const [lastOrder, setLastOrder] = useState(null);
     const [currentShift, setCurrentShift] = useState(null);
     const [todaySales, setTodaySales] = useState({ totalSales: 0, totalOrders: 0 });
+    const [contextMenu, setContextMenu] = useState(null);
+    const [reminderModal, setReminderModal] = useState({ isOpen: false, product: null });
 
     // Persist held orders
     useEffect(() => {
@@ -52,6 +58,27 @@ const POS = () => {
             if (err.response?.status === 401) navigate('/login');
         }
     }, [keyword, navigate]);
+
+    const handleSearchKeyDown = async (e) => {
+        const val = e.target.value;
+        if (e.key === 'Enter' && val) {
+            e.preventDefault();
+            try {
+                const res = await api.get(`/products?keyword=${val}`);
+                const found = res.data.data.filter(p => p.stockQuantity > 0);
+                if (found.length === 1) {
+                    addToCart(found[0], 1);
+                } else if (found.length > 1) {
+                    const exactMatch = found.find(p => p.barcode === val);
+                    if (exactMatch) addToCart(exactMatch, 1);
+                } else {
+                    toast.error('Product not found or out of stock');
+                }
+            } catch (err) {
+                toast.error('Error searching product');
+            }
+        }
+    };
 
     useEffect(() => {
         const t = setTimeout(() => fetchProducts(), 250);
@@ -85,17 +112,21 @@ const POS = () => {
 
     const getProductId = (p) => p.id || p._id;
 
-    const addToCart = (product) => {
+    const addToCart = (product, qtyToAdd = 1) => {
         const pid = getProductId(product);
         const existing = cart.find(item => getProductId(item) === pid);
         if (existing) {
-            if (existing.quantity >= product.stockQuantity) {
+            if (existing.quantity + qtyToAdd > product.stockQuantity) {
                 toast.error(`Available: ${product.stockQuantity} only`);
                 return;
             }
-            setCart(cart.map(item => getProductId(item) === pid ? { ...item, quantity: item.quantity + 1 } : item));
+            setCart(cart.map(item => getProductId(item) === pid ? { ...item, quantity: item.quantity + qtyToAdd } : item));
         } else {
-            setCart([...cart, { ...product, quantity: 1 }]);
+            if (qtyToAdd > product.stockQuantity) {
+                toast.error(`Available: ${product.stockQuantity} only`);
+                return;
+            }
+            setCart([...cart, { ...product, quantity: qtyToAdd }]);
         }
         setKeyword('');
         searchInputRef.current?.focus();
@@ -160,7 +191,7 @@ const POS = () => {
             if (paymentData.paymentMethod === 'pending') {
                 toast.success('Invoice saved as pending', { duration: 4000 });
             } else {
-                toast.success(`Done — Change: ${change.toFixed(2)} AED`, { duration: 4000 });
+                toast.success(`Done — Change: ${change.toFixed(2)} EGP`, { duration: 4000 });
             }
 
             setTimeout(() => {
@@ -181,6 +212,42 @@ const POS = () => {
     const filteredProducts = activeCategory
         ? products.filter(p => p.categoryId === activeCategory || p.categoryId?.id === activeCategory || p.categoryId?._id === activeCategory)
         : products;
+
+    const handleContextMenu = (e, product) => {
+        e.preventDefault();
+        setContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            product
+        });
+    };
+
+    const handleCreateReminder = async (date, notes) => {
+        try {
+            await api.post('/notifications', {
+                title: `Reminder: ${reminderModal.product.name}`,
+                message: notes,
+                type: 'reminder',
+                productId: getProductId(reminderModal.product),
+                dueDate: date
+            });
+            toast.success('Reminder set successfully!');
+            setReminderModal({ isOpen: false, product: null });
+        } catch (error) {
+            toast.error('Failed to set reminder');
+        }
+    };
+
+    const handleMarkAsShortage = async (product) => {
+        try {
+            const newAlert = product.stockQuantity + 10;
+            await api.put(`/products/${getProductId(product)}`, { minStockAlert: newAlert });
+            toast.success(`${product.name} has been marked as a shortage!`);
+            fetchProducts();
+        } catch (error) {
+            toast.error('Failed to mark as shortage');
+        }
+    };
 
     return (
         <div style={{ display: 'flex', height: '100vh', backgroundColor: 'var(--color-bg-body)', fontFamily: 'var(--font-family)' }}>
@@ -204,62 +271,63 @@ const POS = () => {
                             {PHARMACY_NAME}
                         </h2>
                         {currentShift && (
-                            <span className="badge badge-success badge-dot" style={{ fontSize: 'var(--font-size-xs)' }}>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] bg-emerald-100 text-emerald-800 badge-dot" style={{ fontSize: 'var(--font-size-xs)' }}>
                                 Shift Open
                             </span>
                         )}
                     </div>
                     <div className="flex gap-2 items-center">
-                        <div className="card" style={{ padding: 'var(--space-2) var(--space-4)', textAlign: 'center' }}>
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md" style={{ padding: 'var(--space-2) var(--space-4)', textAlign: 'center' }}>
                             <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>Today Sales</div>
                             <div style={{ fontSize: 'var(--font-size-md)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-primary)' }}>
                                 {formatCurrency(todaySales.totalSales || 0)}
                             </div>
                         </div>
-                        <button onClick={() => navigate('/dashboard')} className="btn btn-ghost btn-icon" title="Dashboard" style={{ color: 'var(--color-text-secondary)' }}>
+                        <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')} title="Dashboard" style={{ color: 'var(--color-text-secondary)', padding: '8px' }}>
                             <FaTachometerAlt size={16} />
-                        </button>
-                        <button onClick={handleLogout} className="btn btn-icon" style={{ background: 'var(--color-danger-light)', color: 'var(--color-danger)' }} title="Logout">
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout" style={{ background: 'var(--color-danger-light)', color: 'var(--color-danger)', padding: '8px' }}>
                             <FaSignOutAlt size={16} />
-                        </button>
+                        </Button>
                     </div>
                 </div>
 
-                {/* Search */}
-                <div className="search-input-wrapper">
-                    <FaSearch className="search-icon" />
-                    <input
-                        ref={searchInputRef} type="text"
-                        placeholder="Scan barcode or type product name... (F1)"
-                        value={keyword} onChange={e => setKeyword(e.target.value)}
-                        className="form-input"
-                        style={{ paddingLeft: 44, fontSize: 'var(--font-size-lg)', padding: '14px 14px 14px 44px' }}
-                    />
-                </div>
+                {/* Unified Products Box */}
+                <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden flex flex-col" style={{ flex: 1 }}>
+                    {/* Search & Categories Header */}
+                    <div className="p-4 border-b border-slate-100 bg-slate-50/50 space-y-4">
+                        {/* Search */}
+                <SearchInput
+                    ref={searchInputRef}
+                    placeholder="Scan barcode or type product name... (F1)"
+                    value={keyword}
+                    onChange={e => setKeyword(e.target.value)}
+                    onKeyDown={handleSearchKeyDown}
+                    wrapperClassName="relative w-full"
+                    inputStyle={{ paddingLeft: 44, fontSize: 'var(--font-size-lg)', padding: '14px 14px 14px 44px' }}
+                />
 
                 {/* Category Tabs */}
                 {categories.length > 0 && (
                     <div className="flex gap-2 flex-wrap">
-                        <button onClick={() => setActiveCategory('')}
-                            className={`btn btn-sm ${!activeCategory ? 'btn-primary' : 'btn-outline'}`}>
+                        <Button size="sm" variant={!activeCategory ? 'primary' : 'outline'} onClick={() => setActiveCategory('')}>
                             All
-                        </button>
+                        </Button>
                         {categories.map(c => (
-                            <button key={c.id || c._id} onClick={() => setActiveCategory(c.id || c._id)}
-                                className={`btn btn-sm ${activeCategory === (c.id || c._id) ? 'btn-primary' : 'btn-outline'}`}>
+                            <Button key={c.id || c._id} size="sm" variant={activeCategory === (c.id || c._id) ? 'primary' : 'outline'} onClick={() => setActiveCategory(c.id || c._id)}>
                                 {c.name}
-                            </button>
+                            </Button>
                         ))}
                     </div>
                 )}
+                    </div>
 
-                {/* Products Table */}
-                <div className="data-table-wrapper" style={{ flex: 1, overflow: 'auto' }}>
-                    <table className="data-table">
+                    {/* Products Table */}
+                    <div style={{ flex: 1, overflow: 'auto' }}>
+                        <table className="w-full border-collapse text-sm">
                         <thead>
                             <tr>
                                 <th>Product Name</th>
-                                <th style={{ width: 120 }}>Barcode</th>
                                 <th style={{ width: 80 }}>Price</th>
                                 <th style={{ width: 70 }}>Stock</th>
                                 <th style={{ width: 60 }}>Add</th>
@@ -269,30 +337,28 @@ const POS = () => {
                             {filteredProducts.length === 0 ? (
                                 <tr><td colSpan={5} style={{ padding: 'var(--space-10)', textAlign: 'center', color: 'var(--color-text-muted)' }}>No products found</td></tr>
                             ) : filteredProducts.map(product => (
-                                <tr key={getProductId(product)} onClick={() => addToCart(product)} style={{ cursor: 'pointer' }}>
+                                <tr key={getProductId(product)} onClick={() => addToCart(product)} onContextMenu={(e) => handleContextMenu(e, product)} style={{ cursor: 'pointer' }}>
                                     <td>
                                         <div className="cell-bold">{product.name}</div>
                                         {product.scientificName && <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 1 }}>{product.scientificName}</div>}
                                     </td>
-                                    <td className="cell-mono">{product.barcode}</td>
+
                                     <td className="cell-success">{product.sellingPrice}</td>
                                     <td>
-                                        <span className={`badge ${product.stockQuantity < (product.minStockAlert || 10) ? 'badge-danger' : 'badge-success'}`}>
+                                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] ${product.stockQuantity < (product.minStockAlert || 10) ? 'badge-danger' : 'badge-success'}`}>
                                             {product.stockQuantity}
                                         </span>
                                     </td>
                                     <td style={{ textAlign: 'center' }}>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); addToCart(product); }}
-                                            className="btn btn-primary btn-icon-sm"
-                                        >
+                                        <Button size="icon" onClick={(e) => { e.stopPropagation(); addToCart(product); }}>
                                             <FaPlus size={10} />
-                                        </button>
+                                        </Button>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
-                    </table>
+                        </table>
+                    </div>
                 </div>
 
                 {/* Keyboard Shortcuts */}
@@ -311,6 +377,54 @@ const POS = () => {
                     <span><kbd style={kbdStyle}>Esc</kbd> Clear</span>
                 </div>
             </div>
+
+            {/* Context Menu for Products */}
+            {contextMenu && (
+                <ContextMenu
+                    x={contextMenu.x}
+                    y={contextMenu.y}
+                    onClose={() => setContextMenu(null)}
+                    actions={[
+                        {
+                            label: 'Add 1 to Cart',
+                            icon: FaPlus,
+                            onClick: () => addToCart(contextMenu.product, 1)
+                        },
+                        {
+                            label: 'Add 5 to Cart',
+                            icon: FaPlus,
+                            onClick: () => addToCart(contextMenu.product, 5)
+                        },
+                        {
+                            label: 'Product Info',
+                            icon: FaEye,
+                            onClick: () => toast(`${contextMenu.product.name} - Stock: ${contextMenu.product.stockQuantity}`, { icon: 'ℹ️' })
+                        },
+                        (user?.role === 'admin' || user?.role === 'superadmin' || user?.permissions?.editPrice) ? {
+                            label: 'Edit Price / Details',
+                            icon: FaEdit,
+                            onClick: () => navigate('/products', { state: { editProduct: contextMenu.product } })
+                        } : null,
+                        {
+                            label: 'Set Reminder',
+                            icon: FaCalendarPlus,
+                            onClick: () => setReminderModal({ isOpen: true, product: contextMenu.product })
+                        },
+                        {
+                            label: 'Mark as Shortage',
+                            icon: FaArrowDown,
+                            onClick: () => handleMarkAsShortage(contextMenu.product)
+                        }
+                    ].filter(Boolean)}
+                />
+            )}
+
+            <ReminderModal 
+                isOpen={reminderModal.isOpen} 
+                onClose={() => setReminderModal({ isOpen: false, product: null })}
+                product={reminderModal.product}
+                onSubmit={handleCreateReminder}
+            />
 
             {/* ===== Cart Panel ===== */}
             <div style={{
@@ -352,10 +466,10 @@ const POS = () => {
                 {/* Cart Items */}
                 <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--space-3) var(--space-4)' }}>
                     {cart.length === 0 ? (
-                        <div className="empty-state" style={{ paddingTop: 'var(--space-16)' }}>
+                        <div className="flex flex-col items-center justify-center text-center text-slate-400 p-12" style={{ paddingTop: 'var(--space-16)' }}>
                             <FaShoppingCart size={48} style={{ opacity: 0.15, marginBottom: 'var(--space-4)' }} />
-                            <div className="empty-state-title">Cart is empty</div>
-                            <div className="empty-state-desc">Scan a barcode or click a product to add it</div>
+                            <div className="text-base font-semibold text-slate-600 mb-1">Cart is empty</div>
+                            <div className="text-sm max-w-[250px]">Scan a barcode or click a product to add it</div>
                         </div>
                     ) : (
                         cart.map(item => (
@@ -366,7 +480,7 @@ const POS = () => {
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                     <div className="truncate" style={{ fontWeight: 'var(--font-weight-semibold)', fontSize: 'var(--font-size-md)' }}>{item.name}</div>
                                     <div style={{ color: 'var(--color-primary)', fontWeight: 'var(--font-weight-bold)', fontSize: 'var(--font-size-md)', marginTop: 2 }}>
-                                        {(item.sellingPrice * item.quantity).toFixed(2)} <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-normal)', color: 'var(--color-text-muted)' }}>AED</span>
+                                        {(item.sellingPrice * item.quantity).toFixed(2)} <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-normal)', color: 'var(--color-text-muted)' }}>EGP</span>
                                     </div>
                                 </div>
                                 <div className="flex items-center" style={{ background: 'var(--color-bg-muted)', borderRadius: 'var(--radius-md)', padding: 3 }}>
@@ -393,19 +507,21 @@ const POS = () => {
                         color: 'var(--color-text-primary)', marginBottom: 'var(--space-4)',
                     }}>
                         <span>Total</span>
-                        <span>{subtotal.toFixed(2)} <span style={{ fontSize: 'var(--font-size-md)', fontWeight: 'var(--font-weight-normal)' }}>AED</span></span>
+                        <span>{subtotal.toFixed(2)} <span style={{ fontSize: 'var(--font-size-md)', fontWeight: 'var(--font-weight-normal)' }}>EGP</span></span>
                     </div>
-                    <button
+                    <Button
                         onClick={() => setShowPayment(true)}
                         disabled={cart.length === 0}
-                        className={`btn btn-lg w-full ${cart.length === 0 ? '' : 'btn-success'}`}
+                        variant={cart.length === 0 ? undefined : 'success'}
+                        size="lg"
                         style={{
+                            width: '100%',
                             fontSize: 'var(--font-size-xl)',
                             ...(cart.length === 0 && { background: 'var(--color-bg-active)', color: 'var(--color-text-muted)', cursor: 'not-allowed' })
                         }}
                     >
                         {cart.length === 0 ? 'Cart is empty' : 'Pay (F12)'}
-                    </button>
+                    </Button>
                 </div>
             </div>
 

@@ -2,13 +2,17 @@ import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { getId } from '../../utils/getId';
 import PageHeader from '../../components/common/PageHeader';
-import { FaTags, FaPlus, FaEdit, FaTrash, FaUserPlus } from 'react-icons/fa';
+import Button from '../../components/common/Button';
+import InputField from '../../components/common/InputField';
+import { FaTags, FaPlus, FaEdit, FaTrash, FaUserPlus, FaGlobe } from 'react-icons/fa';
 
 const Settings = () => {
     const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState('categories');
+    const { lang, changeLanguage, t } = useLanguage();
+    const [activeTab, setActiveTab] = useState('language');
     const [categories, setCategories] = useState([]);
     const [catForm, setCatForm] = useState({ name: '', description: '' });
     const [editingCat, setEditingCat] = useState(null);
@@ -23,10 +27,10 @@ const Settings = () => {
         try {
             if (editingCat) {
                 await api.put(`/categories/${editingCat}`, catForm);
-                toast.success('Category updated');
+                toast.success(t.settings.categoryUpdated);
             } else {
                 await api.post('/categories', catForm);
-                toast.success('Category added');
+                toast.success(t.settings.categoryAdded);
             }
             setCatForm({ name: '', description: '' }); setEditingCat(null);
             const res = await api.get('/categories');
@@ -37,7 +41,7 @@ const Settings = () => {
     const deleteCat = async (id) => {
         try {
             await api.delete(`/categories/${id}`);
-            toast.success('Category deleted');
+            toast.success(t.settings.categoryDeleted);
             setCategories(categories.filter(c => getId(c) !== id));
         } catch (err) { toast.error(err.response?.data?.message || 'Error'); }
     };
@@ -46,7 +50,7 @@ const Settings = () => {
         e.preventDefault();
         try {
             await api.post('/auth/register-staff', staffForm);
-            toast.success('Staff member added');
+            toast.success(t.settings.staffAdded);
             setStaffForm({ name: '', email: '', password: '', phone: '', role: 'pharmacist' });
         } catch (err) { toast.error(err.response?.data?.message || 'Error'); }
     };
@@ -54,34 +58,73 @@ const Settings = () => {
     return (
         <div className="page-wrapper" id="settings-page">
             <PageHeader
-                title="Settings"
-                subtitle="Manage categories, staff, and system preferences"
-                breadcrumbs={[{ label: 'System', to: '/settings' }, { label: 'Settings' }]}
+                title={t.settings.title}
+                subtitle={t.settings.subtitle}
+                breadcrumbs={[{ label: t.nav.system, to: '/settings' }, { label: t.settings.title }]}
             />
 
             {/* Tabs */}
             <div className="tabs" id="settings-tabs">
+                <button className={`tab-btn ${activeTab === 'language' ? 'active' : ''}`} onClick={() => setActiveTab('language')}>
+                    <FaGlobe size={14} /> {t.settings.language}
+                </button>
                 <button className={`tab-btn ${activeTab === 'categories' ? 'active' : ''}`} onClick={() => setActiveTab('categories')}>
-                    <FaTags size={14} /> Categories
+                    <FaTags size={14} /> {t.settings.categories}
                 </button>
                 {user?.role === 'admin' && (
                     <button className={`tab-btn ${activeTab === 'staff' ? 'active' : ''}`} onClick={() => setActiveTab('staff')}>
-                        <FaUserPlus size={14} /> Add Staff
+                        <FaUserPlus size={14} /> {t.settings.addStaff}
                     </button>
                 )}
             </div>
 
+            {activeTab === 'language' && (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md p-6 animate-in">
+                    <h3 style={{ margin: '0 0 var(--space-4)', fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-bold)' }}>{t.settings.selectLanguage}</h3>
+                    <div style={{ display: 'flex', gap: 'var(--space-4)' }}>
+                        {/* English Card */}
+                        <div 
+                            onClick={() => { changeLanguage('en'); toast.success('Language updated successfully'); }}
+                            style={{
+                                padding: 'var(--space-5)', border: `2px solid ${lang === 'en' ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                                borderRadius: 'var(--radius-xl)', cursor: 'pointer', flex: 1, maxWidth: 300,
+                                background: lang === 'en' ? 'var(--color-primary-light)' : 'transparent',
+                                transition: 'all 0.3s ease', textAlign: 'center'
+                            }}
+                        >
+                            <span style={{ fontSize: '32px', display: 'block', marginBottom: '8px' }}>🇺🇸</span>
+                            <strong style={{ fontSize: 'var(--font-size-lg)' }}>English</strong>
+                            <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>LTR Layout</p>
+                        </div>
+                        {/* Arabic Card */}
+                        <div 
+                            onClick={() => { changeLanguage('ar'); toast.success('تم تحديث اللغة بنجاح'); }}
+                            style={{
+                                padding: 'var(--space-5)', border: `2px solid ${lang === 'ar' ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                                borderRadius: 'var(--radius-xl)', cursor: 'pointer', flex: 1, maxWidth: 300,
+                                background: lang === 'ar' ? 'var(--color-primary-light)' : 'transparent',
+                                transition: 'all 0.3s ease', textAlign: 'center'
+                            }}
+                        >
+                            <span style={{ fontSize: '32px', display: 'block', marginBottom: '8px' }}>🇸🇦</span>
+                            <strong style={{ fontSize: 'var(--font-size-lg)' }}>العربية</strong>
+                            <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>RTL Layout</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {activeTab === 'categories' && (
-                <div className="card card-body">
-                    <h3 style={{ margin: '0 0 var(--space-4)', fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-bold)' }}>Manage Categories</h3>
-                    <form onSubmit={handleSaveCategory} className="flex gap-3" style={{ marginBottom: 'var(--space-5)', flexWrap: 'wrap' }}>
-                        <input required placeholder="Category name" value={catForm.name} onChange={e => setCatForm({ ...catForm, name: e.target.value })} className="form-input" style={{ flex: 1, minWidth: 180 }} />
-                        <input placeholder="Description (optional)" value={catForm.description} onChange={e => setCatForm({ ...catForm, description: e.target.value })} className="form-input" style={{ flex: 1, minWidth: 180 }} />
-                        <button type="submit" className={`btn ${editingCat ? 'btn-warning' : 'btn-primary'}`}>
-                            {editingCat ? 'Save' : <><FaPlus size={12} /> Add</>}
-                        </button>
+                <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md p-6 animate-in">
+                    <h3 style={{ margin: '0 0 var(--space-4)', fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-bold)' }}>{t.settings.manageCategories}</h3>
+                    <form onSubmit={handleSaveCategory} className="flex gap-3" style={{ marginBottom: 'var(--space-5)', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                        <InputField required placeholder={t.settings.categoryName} value={catForm.name} onChange={e => setCatForm({ ...catForm, name: e.target.value })} style={{ flex: 1, minWidth: 180 }} />
+                        <InputField placeholder={t.settings.categoryDesc} value={catForm.description} onChange={e => setCatForm({ ...catForm, description: e.target.value })} style={{ flex: 1, minWidth: 180 }} />
+                        <Button type="submit" variant={editingCat ? 'warning' : 'primary'}>
+                            {editingCat ? t.common.save : <><FaPlus size={12} /> {t.common.add}</>}
+                        </Button>
                         {editingCat && (
-                            <button type="button" className="btn btn-ghost" onClick={() => { setEditingCat(null); setCatForm({ name: '', description: '' }); }}>Cancel</button>
+                            <Button type="button" variant="ghost" onClick={() => { setEditingCat(null); setCatForm({ name: '', description: '' }); }}>{t.common.cancel}</Button>
                         )}
                     </form>
 
@@ -104,12 +147,12 @@ const Settings = () => {
                                     {c.description && <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 2 }}>{c.description}</div>}
                                 </div>
                                 <div className="flex gap-1">
-                                    <button className="btn btn-ghost btn-icon-sm" onClick={() => { setEditingCat(getId(c)); setCatForm({ name: c.name, description: c.description || '' }); }} id={`btn-edit-cat-${getId(c)}`}>
+                                    <Button variant="ghost" size="icon" onClick={() => { setEditingCat(getId(c)); setCatForm({ name: c.name, description: c.description || '' }); }} id={`btn-edit-cat-${getId(c)}`}>
                                         <FaEdit size={13} color="var(--color-primary)" />
-                                    </button>
-                                    <button className="btn btn-ghost btn-icon-sm" onClick={() => deleteCat(getId(c))} id={`btn-delete-cat-${getId(c)}`}>
+                                    </Button>
+                                    <Button variant="ghost" size="icon" onClick={() => deleteCat(getId(c))} id={`btn-delete-cat-${getId(c)}`}>
                                         <FaTrash size={13} color="var(--color-danger)" />
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                         ))}
@@ -118,22 +161,25 @@ const Settings = () => {
             )}
 
             {activeTab === 'staff' && user?.role === 'admin' && (
-                <div className="card card-body">
-                    <h3 style={{ margin: '0 0 var(--space-4)', fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-bold)' }}>Add New Staff Member</h3>
+                <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md p-6 animate-in">
+                    <h3 style={{ margin: '0 0 var(--space-4)', fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-bold)' }}>{t.settings.addStaffMember}</h3>
                     <form onSubmit={handleAddStaff} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 'var(--space-4)' }}>
-                        <div className="form-group"><label className="form-label">Full Name</label><input required value={staffForm.name} onChange={e => setStaffForm({ ...staffForm, name: e.target.value })} className="form-input" /></div>
-                        <div className="form-group"><label className="form-label">Email</label><input type="email" required value={staffForm.email} onChange={e => setStaffForm({ ...staffForm, email: e.target.value })} className="form-input" /></div>
-                        <div className="form-group"><label className="form-label">Password</label><input type="password" required minLength={8} value={staffForm.password} onChange={e => setStaffForm({ ...staffForm, password: e.target.value })} className="form-input" /></div>
-                        <div className="form-group"><label className="form-label">Phone</label><input value={staffForm.phone} onChange={e => setStaffForm({ ...staffForm, phone: e.target.value })} className="form-input" /></div>
-                        <div className="form-group">
-                            <label className="form-label">Role</label>
-                            <select value={staffForm.role} onChange={e => setStaffForm({ ...staffForm, role: e.target.value })} className="form-select">
-                                <option value="pharmacist">Pharmacist</option>
-                                <option value="admin">System Admin</option>
-                            </select>
-                        </div>
+                        <InputField label={t.settings.fullName} required value={staffForm.name} onChange={e => setStaffForm({ ...staffForm, name: e.target.value })} />
+                        <InputField label="Email" type="email" required value={staffForm.email} onChange={e => setStaffForm({ ...staffForm, email: e.target.value })} />
+                        <InputField label="Password" type="password" required minLength={8} value={staffForm.password} onChange={e => setStaffForm({ ...staffForm, password: e.target.value })} />
+                        <InputField label="Phone" value={staffForm.phone} onChange={e => setStaffForm({ ...staffForm, phone: e.target.value })} />
+                        <InputField 
+                            type="select" 
+                            label={t.settings.role} 
+                            value={staffForm.role} 
+                            onChange={e => setStaffForm({ ...staffForm, role: e.target.value })}
+                            options={[
+                                { value: 'pharmacist', label: t.settings.pharmacistRole },
+                                { value: 'admin', label: t.settings.adminRole }
+                            ]}
+                        />
                         <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                            <button type="submit" className="btn btn-success">Create Account</button>
+                            <Button type="submit" variant="success">{t.settings.createAccount}</Button>
                         </div>
                     </form>
                 </div>

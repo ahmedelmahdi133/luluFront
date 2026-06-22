@@ -12,6 +12,7 @@ const DataTable = ({
     emptyDescription = 'There are no records to display.',
     emptyIcon,
     onRowClick,
+    onRowContextMenu,
     sortable = true,
     paginated = true,
     pageSize: defaultPageSize = 15,
@@ -88,16 +89,16 @@ const DataTable = ({
     }
 
     return (
-        <div className="data-table-wrapper">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
             {/* Toolbar */}
             {(exportFilename || renderActions) && (
-                <div className="table-toolbar">
-                    <div className="table-toolbar-left">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 gap-3 flex-wrap">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
                         {renderActions && renderActions()}
                     </div>
-                    <div className="table-toolbar-right">
+                    <div className="flex items-center gap-2">
                         {exportFilename && data?.length > 0 && (
-                            <button className="btn btn-outline btn-sm" onClick={handleExport}>
+                            <button className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-md border-none cursor-pointer transition-all leading-none whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed bg-transparent text-indigo-600 border-[1.5px] border-slate-200 hover:bg-indigo-50 hover:border-indigo-600 disabled:hover:bg-transparent px-3 py-1.5 text-xs" onClick={handleExport}>
                                 <FaDownload size={11} /> Export CSV
                             </button>
                         )}
@@ -107,7 +108,7 @@ const DataTable = ({
 
             {/* Table */}
             <div style={{ overflowX: 'auto' }}>
-                <table className="data-table">
+                <table className="w-full border-collapse text-sm">
                     <thead>
                         <tr>
                             {columns.map(col => (
@@ -153,6 +154,7 @@ const DataTable = ({
                                 <tr
                                     key={row.id || row._id || rowIdx}
                                     onClick={() => onRowClick && onRowClick(row)}
+                                    onContextMenu={(e) => onRowContextMenu && onRowContextMenu(e, row)}
                                     style={{
                                         cursor: onRowClick ? 'pointer' : 'default',
                                         ...(compact && { fontSize: 'var(--font-size-sm)' })
@@ -179,7 +181,7 @@ const DataTable = ({
 
             {/* Pagination */}
             {paginated && totalItems > 0 && (
-                <div className="table-pagination">
+                <div className="flex items-center justify-between px-6 py-3 border-t border-slate-100 bg-slate-50 rounded-b-xl text-sm text-slate-500">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
                         <span>
                             Showing {((page - 1) * pageSize) + 1}–{Math.min(page * pageSize, totalItems)} of {totalItems}
@@ -187,7 +189,7 @@ const DataTable = ({
                         <select
                             value={pageSize}
                             onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-                            className="form-select"
+                            className="w-full px-3.5 py-2.5 text-sm text-slate-900 bg-white border-[1.5px] border-slate-200 rounded-md outline-none transition-all hover:border-slate-300 focus:border-indigo-600 focus:ring-[3px] focus:ring-indigo-600/15"
                             style={{ width: 'auto', padding: '4px 8px', fontSize: 'var(--font-size-sm)' }}
                         >
                             {[10, 15, 25, 50, 100].map(n => (
@@ -195,9 +197,9 @@ const DataTable = ({
                             ))}
                         </select>
                     </div>
-                    <div className="table-pagination-controls">
+                    <div className="flex items-center gap-1">
                         <button
-                            className="table-pagination-btn"
+                            className="flex items-center justify-center min-w-[32px] px-2.5 py-1.5 rounded-md border border-slate-200 bg-white text-slate-500 text-sm cursor-pointer transition-all hover:bg-indigo-50 hover:border-indigo-600 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed"
                             disabled={page <= 1}
                             onClick={() => setPage(p => p - 1)}
                         >
@@ -206,14 +208,14 @@ const DataTable = ({
                         {getPageNumbers().map(p => (
                             <button
                                 key={p}
-                                className={`table-pagination-btn ${p === page ? 'active' : ''}`}
+                                className={`flex items-center justify-center min-w-[32px] px-2.5 py-1.5 rounded-md border border-slate-200 bg-white text-slate-500 text-sm cursor-pointer transition-all hover:bg-indigo-50 hover:border-indigo-600 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed ${p === page ? 'active' : ''}`}
                                 onClick={() => setPage(p)}
                             >
                                 {p}
                             </button>
                         ))}
                         <button
-                            className="table-pagination-btn"
+                            className="flex items-center justify-center min-w-[32px] px-2.5 py-1.5 rounded-md border border-slate-200 bg-white text-slate-500 text-sm cursor-pointer transition-all hover:bg-indigo-50 hover:border-indigo-600 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed"
                             disabled={page >= totalPages}
                             onClick={() => setPage(p => p + 1)}
                         >

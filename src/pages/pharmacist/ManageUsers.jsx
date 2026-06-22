@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import api from '../../api/axios';
-import { FaTrash, FaUserPlus, FaUserShield } from 'react-icons/fa';
+import { FaTrash, FaUserPlus, FaUserShield, FaCog } from 'react-icons/fa';
+import { useAuth } from '../../context/AuthContext';
+import Button from '../../components/common/Button';
+import InputField from '../../components/common/InputField';
 
 const ManageUsers = () => {
+    const { user: currentUser } = useAuth();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [showPermissionsModal, setShowPermissionsModal] = useState(false);
+    const [selectedUser, setSelectedUser] = useState(null);
     
     // حالة الفورم لإضافة مستخدم جديد
     const [formData, setFormData] = useState({
@@ -17,6 +23,14 @@ const ManageUsers = () => {
         role: 'pharmacist' // القيمة الافتراضية
     });
 
+    // حالة الصلاحيات للمستخدم المحدد
+    const [permissionsForm, setPermissionsForm] = useState({
+        editPrice: false,
+        viewReturns: false,
+        viewPrescriptions: false,
+        viewReports: false
+    });
+
     // جلب المستخدمين أول ما الصفحة تفتح
     useEffect(() => {
         fetchUsers();
@@ -24,7 +38,7 @@ const ManageUsers = () => {
 
     const fetchUsers = async () => {
         try {
-            const res = await api.get('/users'); // هنحتاج نعمل الروت ده في الباك إند
+            const res = await api.get('/users');
             setUsers(res.data.data);
         } catch (error) {
             toast.error('حدث خطأ أثناء جلب المستخدمين');
@@ -37,7 +51,7 @@ const ManageUsers = () => {
         if (!window.confirm('هل أنت متأكد من حذف هذا المستخدم نهائياً؟')) return;
         
         try {
-            await api.delete(`/users/${id}`); // هنحتاج نعمل الروت ده في الباك إند
+            await api.delete(`/users/${id}`);
             setUsers(users.filter(user => user.id !== id));
             toast.success('تم حذف المستخدم بنجاح');
         } catch (error) {
@@ -48,7 +62,6 @@ const ManageUsers = () => {
     const handleAddUser = async (e) => {
         e.preventDefault();
         try {
-            // هنستخدم الروت اللي إنت عامله أصلاً في الباك إند
             await api.post('/auth/register-staff', formData);
             toast.success('تم إضافة الموظف بنجاح');
             setShowModal(false);
@@ -59,19 +72,38 @@ const ManageUsers = () => {
         }
     };
 
+    const handleOpenPermissions = (user) => {
+        setSelectedUser(user);
+        setPermissionsForm({
+            editPrice: user.permissions?.editPrice || false,
+            viewReturns: user.permissions?.viewReturns || false,
+            viewPrescriptions: user.permissions?.viewPrescriptions || false,
+            viewReports: user.permissions?.viewReports || false
+        });
+        setShowPermissionsModal(true);
+    };
+
+    const handleSavePermissions = async (e) => {
+        e.preventDefault();
+        try {
+            await api.put(`/users/${selectedUser.id}/permissions`, { permissions: permissionsForm });
+            toast.success('تم تحديث الصلاحيات بنجاح');
+            setShowPermissionsModal(false);
+            fetchUsers();
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'فشل تحديث الصلاحيات');
+        }
+    };
+
     if (loading) return <div style={{ padding: '20px' }}>جاري التحميل...</div>;
 
     return (
         <div style={{ padding: 'var(--space-6)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)' }}>
                 <h2><FaUserShield style={{ marginRight: '8px' }} /> إدارة المستخدمين والصلاحيات</h2>
-                <button 
-                    onClick={() => setShowModal(true)} 
-                    className="btn btn-primary"
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                >
+                <Button onClick={() => setShowModal(true)}>
                     <FaUserPlus /> إضافة موظف جديد
-                </button>
+                </Button>
             </div>
 
             {/* جدول المستخدمين */}
@@ -97,20 +129,31 @@ const ManageUsers = () => {
                                         padding: '4px 8px', 
                                         borderRadius: '4px',
                                         fontSize: '12px',
-                                        backgroundColor: user.role === 'admin' ? '#fee2e2' : user.role === 'pharmacist' ? '#dbeafe' : '#f3f4f6',
-                                        color: user.role === 'admin' ? '#991b1b' : user.role === 'pharmacist' ? '#1e40af' : '#374151'
+                                        backgroundColor: user.role === 'superadmin' ? '#fce7f3' : user.role === 'admin' ? '#fee2e2' : user.role === 'pharmacist' ? '#dbeafe' : '#f3f4f6',
+                                        color: user.role === 'superadmin' ? '#9d174d' : user.role === 'admin' ? '#991b1b' : user.role === 'pharmacist' ? '#1e40af' : '#374151'
                                     }}>
                                         {user.role}
                                     </span>
                                 </td>
-                                <td style={{ padding: '12px' }}>
-                                    <button 
+                                <td style={{ padding: '12px', display: 'flex', gap: '10px' }}>
+                                    {currentUser?.role === 'superadmin' && user.role !== 'superadmin' && (
+                                        <Button 
+                                            variant="ghost" size="icon"
+                                            onClick={() => handleOpenPermissions(user)}
+                                            title="تعديل الصلاحيات"
+                                            style={{ color: '#4f46e5' }}
+                                        >
+                                            <FaCog size={16} />
+                                        </Button>
+                                    )}
+                                    <Button 
+                                        variant="ghost" size="icon"
                                         onClick={() => handleDelete(user.id)}
-                                        style={{ color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}
                                         title="حذف المستخدم"
+                                        style={{ color: '#dc2626' }}
                                     >
                                         <FaTrash size={16} />
-                                    </button>
+                                    </Button>
                                 </td>
                             </tr>
                         ))}
@@ -129,35 +172,90 @@ const ManageUsers = () => {
                         <h3 style={{ marginBottom: '20px' }}>إضافة موظف جديد</h3>
                         <form onSubmit={handleAddUser}>
                             <div style={{ marginBottom: '15px' }}>
-                                <label className="form-label">الاسم</label>
-                                <input type="text" className="form-input" required
-                                    value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                                <InputField label="الاسم" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                             </div>
                             <div style={{ marginBottom: '15px' }}>
-                                <label className="form-label">البريد الإلكتروني</label>
-                                <input type="email" className="form-input" required
-                                    value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                                <InputField type="email" label="البريد الإلكتروني" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
                             </div>
                             <div style={{ marginBottom: '15px' }}>
-                                <label className="form-label">كلمة المرور</label>
-                                <input type="password" className="form-input" required minLength="8"
-                                    value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+                                <InputField type="password" label="كلمة المرور" required minLength="8" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
                             </div>
                             <div style={{ marginBottom: '15px' }}>
-                                <label className="form-label">رقم الهاتف</label>
-                                <input type="text" className="form-input" 
-                                    value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                                <InputField label="رقم الهاتف" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
                             </div>
                             <div style={{ marginBottom: '20px' }}>
-                                <label className="form-label">الصلاحية</label>
-                                <select className="form-input" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
-                                    <option value="pharmacist">صيدلي (Pharmacist)</option>
-                                    <option value="admin">مدير نظام (Admin)</option>
-                                </select>
+                                <InputField 
+                                    type="select" 
+                                    label="الصلاحية" 
+                                    value={formData.role} 
+                                    onChange={e => setFormData({...formData, role: e.target.value})}
+                                    options={[
+                                        { value: 'pharmacist', label: 'صيدلي (Pharmacist)' },
+                                        { value: 'admin', label: 'مدير نظام (Admin)' },
+                                        ...(currentUser?.role === 'superadmin' ? [{ value: 'superadmin', label: 'سوبر أدمن (Super Admin)' }] : [])
+                                    ]}
+                                />
                             </div>
                             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                                <button type="button" onClick={() => setShowModal(false)} style={{ padding: '8px 16px', border: '1px solid #ccc', borderRadius: '6px', background: 'white', cursor: 'pointer' }}>إلغاء</button>
-                                <button type="submit" className="btn btn-primary" style={{ padding: '8px 16px' }}>حفظ</button>
+                                <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>إلغاء</Button>
+                                <Button type="submit">حفظ</Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* نافذة الصلاحيات (Modal) للـ Super Admin */}
+            {showPermissionsModal && selectedUser && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', zIndex: 1000
+                }}>
+                    <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '10px', width: '400px' }}>
+                        <h3 style={{ marginBottom: '20px' }}>تعديل صلاحيات ({selectedUser.name})</h3>
+                        <form onSubmit={handleSavePermissions}>
+                            <div className="flex flex-col gap-3 mb-6">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={permissionsForm.editPrice}
+                                        onChange={e => setPermissionsForm({...permissionsForm, editPrice: e.target.checked})}
+                                        className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-600"
+                                    />
+                                    <span className="text-sm font-semibold text-slate-700">تعديل أسعار المنتجات</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={permissionsForm.viewReturns}
+                                        onChange={e => setPermissionsForm({...permissionsForm, viewReturns: e.target.checked})}
+                                        className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-600"
+                                    />
+                                    <span className="text-sm font-semibold text-slate-700">رؤية وإدارة المرتجعات</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={permissionsForm.viewPrescriptions}
+                                        onChange={e => setPermissionsForm({...permissionsForm, viewPrescriptions: e.target.checked})}
+                                        className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-600"
+                                    />
+                                    <span className="text-sm font-semibold text-slate-700">إدارة الروشتات</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={permissionsForm.viewReports}
+                                        onChange={e => setPermissionsForm({...permissionsForm, viewReports: e.target.checked})}
+                                        className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-600"
+                                    />
+                                    <span className="text-sm font-semibold text-slate-700">الاطلاع على التقارير</span>
+                                </label>
+                            </div>
+                            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                                <Button type="button" variant="ghost" onClick={() => setShowPermissionsModal(false)}>إلغاء</Button>
+                                <Button type="submit">حفظ التعديلات</Button>
                             </div>
                         </form>
                     </div>

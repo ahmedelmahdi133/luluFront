@@ -3,7 +3,6 @@ import { Link, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api/axios';
 import { useCart } from '../../context/CartContext';
-import { COLORS } from '../../utils/constants';
 import { FaSearch, FaPills, FaShoppingCart } from 'react-icons/fa';
 
 const Store = () => {
@@ -14,7 +13,6 @@ const Store = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const activeCategory = searchParams.get('category') || '';
     const { addToCart } = useCart();
-    const C = COLORS.customerPrimary;
 
     const fetchProducts = useCallback(async () => {
         setLoading(true);
@@ -46,85 +44,105 @@ const Store = () => {
     };
 
     return (
-        <div className="customer-page">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 10 }}>
-                <h2 className="section-title" style={{ margin: 0 }}>Store</h2>
-                <div style={{ fontSize: 13, color: '#64748b' }}>{products.length} product(s)</div>
+        <div className="max-w-7xl mx-auto px-5 py-10">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                <div>
+                    <h2 className="text-3xl font-black text-slate-800 tracking-tight m-0 mb-1">Pharmacy Store</h2>
+                    <p className="text-slate-500 font-medium text-sm m-0">Browse our wide selection of medicines and healthcare products.</p>
+                </div>
+                <div className="text-[13px] font-bold text-teal-700 bg-teal-50 px-4 py-1.5 rounded-full border border-teal-100/50 shadow-sm">
+                    {products.length} products available
+                </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
-                <div style={{ flex: 1, minWidth: 240, position: 'relative' }}>
-                    <FaSearch style={{ position: 'absolute', left: 14, top: 13, color: '#94a3b8' }} />
-                    <input placeholder="Search for a medicine or product..." value={keyword} onChange={e => setKeyword(e.target.value)}
-                        style={{
-                            width: '100%', padding: '12px 14px 12px 40px', borderRadius: 12,
-                            border: '1px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box'
-                        }} />
+            <div className="flex flex-col lg:flex-row gap-5 mb-10">
+                <div className="relative flex-1 max-w-xl">
+                    <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input 
+                        placeholder="Search for a medicine or product..." 
+                        value={keyword} 
+                        onChange={e => setKeyword(e.target.value)}
+                        className="w-full pl-12 pr-5 py-4 bg-white border border-slate-200 rounded-2xl text-[15px] font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all shadow-sm"
+                    />
                 </div>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    <button onClick={() => setSearchParams({})} style={catBtnStyle(!activeCategory, C)}>All</button>
+                <div className="flex gap-2.5 flex-wrap items-center">
+                    <button 
+                        onClick={() => setSearchParams({})} 
+                        className={`px-6 py-3.5 rounded-2xl text-[14px] font-bold transition-all duration-300 border-none cursor-pointer ${!activeCategory ? 'bg-slate-800 text-white shadow-md shadow-slate-800/20' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200 hover:border-slate-300 shadow-sm'}`}
+                    >
+                        All
+                    </button>
                     {categories.map(cat => (
-                        <button key={cat._id} onClick={() => setSearchParams({ category: cat._id })}
-                            style={catBtnStyle(activeCategory === cat._id, C)}>{cat.name}</button>
+                        <button 
+                            key={cat.id} 
+                            onClick={() => setSearchParams({ category: cat.id })}
+                            className={`px-6 py-3.5 rounded-2xl text-[14px] font-bold transition-all duration-300 border-none cursor-pointer ${activeCategory === cat.id ? 'bg-slate-800 text-white shadow-md shadow-slate-800/20' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200 hover:border-slate-300 shadow-sm'}`}
+                        >
+                            {cat.name}
+                        </button>
                     ))}
                 </div>
             </div>
 
             {loading ? (
-                <div style={{ textAlign: 'center', padding: 60, color: '#94a3b8' }}>Loading...</div>
+                <div className="flex justify-center items-center py-32">
+                    <div className="w-12 h-12 border-4 border-teal-100 border-t-teal-600 rounded-full animate-spin"></div>
+                </div>
             ) : products.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: 60, color: '#94a3b8' }}>
-                    <FaPills size={48} />
-                    <p style={{ marginTop: 12 }}>No products found</p>
+                <div className="text-center py-24 bg-white rounded-3xl border border-slate-100 shadow-sm max-w-2xl mx-auto">
+                    <div className="w-24 h-24 bg-slate-50 rounded-full flex justify-center items-center mx-auto mb-5">
+                        <FaPills size={40} className="text-slate-300" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-800 mb-2">No products found</h3>
+                    <p className="text-slate-500 text-base">Try adjusting your search query or changing the category filter.</p>
                 </div>
             ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 18 }}>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                     {products.map(product => (
-                        <Link key={product._id} to={`/store/${product._id}`} style={{
-                            backgroundColor: 'white', borderRadius: 14, overflow: 'hidden',
-                            textDecoration: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-                            border: '1px solid #e2e8f0',
-                            transition: 'all 0.2s', display: 'flex', flexDirection: 'column'
-                        }}
-                            onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.1)'; }}
-                            onMouseOut={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)'; }}
+                        <Link 
+                            key={product.id} 
+                            to={`/store/${product.id}`} 
+                            className="group bg-white rounded-3xl overflow-hidden no-underline shadow-sm hover:shadow-xl hover:shadow-teal-900/5 transition-all duration-300 border border-slate-100 flex flex-col hover:-translate-y-1.5"
                         >
-                            <div style={{
-                                height: 180, backgroundColor: '#f1f5f9',
-                                display: 'flex', justifyContent: 'center', alignItems: 'center',
-                                overflow: 'hidden', position: 'relative'
-                            }}>
+                            <div className="h-48 bg-gradient-to-br from-slate-50 to-slate-100 flex justify-center items-center relative overflow-hidden p-4">
                                 {product.image ? (
-                                    <img src={product.image} alt={product.name} style={{
-                                        width: '100%', height: '100%', objectFit: 'cover',
-                                        transition: 'transform 0.3s'
-                                    }}
+                                    <img 
+                                        src={product.image} 
+                                        alt={product.name} 
+                                        className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500" 
                                         onError={e => { e.currentTarget.style.display = 'none'; }}
                                     />
                                 ) : (
-                                    <FaPills size={48} color="#cbd5e1" />
+                                    <div className="w-20 h-20 bg-white rounded-full shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                                        <FaPills size={32} className="text-slate-300" />
+                                    </div>
                                 )}
                             </div>
-                            <div style={{ padding: 16, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                <div style={{ fontSize: 15, fontWeight: 600, color: '#1e293b', marginBottom: 4, lineHeight: 1.4 }}>{product.name}</div>
+                            <div className="p-5 flex-1 flex flex-col border-t border-slate-50">
                                 {product.categoryId?.name && (
-                                    <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 8 }}>{product.categoryId.name}</div>
+                                    <div className="text-[11px] font-bold text-teal-600 uppercase tracking-wider mb-2">{product.categoryId.name}</div>
                                 )}
-                                <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ fontSize: 18, fontWeight: 700, color: C }}>
-                                        {product.sellingPrice} <span style={{ fontSize: 12 }}>AED</span>
-                                    </span>
+                                <div className="text-base font-bold text-slate-800 mb-4 leading-snug line-clamp-2 group-hover:text-teal-700 transition-colors">{product.name}</div>
+                                
+                                <div className="mt-auto flex justify-between items-end">
+                                    <div className="flex flex-col">
+                                        <span className="text-[11px] font-semibold text-slate-400 mb-0.5">Price</span>
+                                        <span className="text-xl font-black text-slate-900">
+                                            {product.sellingPrice} <span className="text-[13px] font-bold text-slate-500">EGP</span>
+                                        </span>
+                                    </div>
+                                    
                                     {product.stockQuantity > 0 ? (
-                                        <button onClick={e => handleAddToCart(e, product)} style={{
-                                            padding: '8px 14px', backgroundColor: C, color: 'white',
-                                            border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 12,
-                                            fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4
-                                        }}>
-                                            <FaShoppingCart size={12} /> Add
+                                        <button 
+                                            onClick={e => handleAddToCart(e, product)} 
+                                            className="w-10 h-10 rounded-xl bg-teal-50 hover:bg-teal-600 text-teal-700 hover:text-white flex items-center justify-center cursor-pointer transition-all border-none shadow-sm group/btn relative overflow-hidden"
+                                            title="Add to Cart"
+                                        >
+                                            <FaShoppingCart size={15} className="relative z-10 group-active/btn:scale-90 transition-transform" />
                                         </button>
                                     ) : (
-                                        <span style={{ fontSize: 11, color: '#dc2626', backgroundColor: '#fef2f2', padding: '4px 10px', borderRadius: 10 }}>
-                                            Out of Stock
+                                        <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2.5 py-1.5 rounded-lg border border-red-100">
+                                            OUT OF STOCK
                                         </span>
                                     )}
                                 </div>
@@ -136,12 +154,5 @@ const Store = () => {
         </div>
     );
 };
-
-const catBtnStyle = (active, color) => ({
-    padding: '8px 18px', borderRadius: 20, border: 'none', cursor: 'pointer',
-    fontSize: 13, fontWeight: 600,
-    backgroundColor: active ? color : 'white', color: active ? 'white' : '#64748b',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.06)'
-});
 
 export default Store;

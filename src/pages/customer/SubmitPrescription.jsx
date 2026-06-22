@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import api from '../../api/axios';
-import { COLORS } from '../../utils/constants';
 import { FaFileMedical, FaPaperPlane, FaImage, FaClock, FaCheck, FaTimes, FaQuoteRight, FaSpinner } from 'react-icons/fa';
+import { sanitizeInput, validateUrl } from '../../utils/security';
 
 const SubmitPrescription = () => {
     const [prescriptions, setPrescriptions] = useState([]);
@@ -11,7 +11,6 @@ const SubmitPrescription = () => {
     const [notes, setNotes] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [showForm, setShowForm] = useState(false);
-    const C = COLORS.customerPrimary;
 
     const fetchPrescriptions = async () => {
         try {
@@ -25,10 +24,15 @@ const SubmitPrescription = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!imageUrl.trim()) return toast.error('Please provide a prescription image URL');
+        const safeImageUrl = sanitizeInput(imageUrl);
+        const safeNotes = sanitizeInput(notes);
+
+        if (!safeImageUrl) return toast.error('Please provide a prescription image URL');
+        if (!validateUrl(safeImageUrl)) return toast.error('Please provide a valid image URL');
+
         setSubmitting(true);
         try {
-            await api.post('/prescriptions', { imageUrl: imageUrl.trim(), notes: notes.trim() });
+            await api.post('/prescriptions', { imageUrl: safeImageUrl, notes: safeNotes });
             toast.success('Prescription submitted successfully!');
             setImageUrl('');
             setNotes('');
@@ -52,84 +56,72 @@ const SubmitPrescription = () => {
 
     const getStatusBadge = (status) => {
         const map = {
-            pending: { bg: '#fef3c7', color: '#92400e', label: 'Pending Review', icon: FaClock },
-            reviewed: { bg: '#dbeafe', color: '#1e40af', label: 'Reviewed', icon: FaCheck },
-            quoted: { bg: '#e0e7ff', color: '#3730a3', label: 'Quote Ready', icon: FaQuoteRight },
-            preparing: { bg: '#fef3c7', color: '#92400e', label: 'Preparing', icon: FaSpinner },
-            ready: { bg: '#dcfce7', color: '#166534', label: 'Ready for Pickup', icon: FaCheck },
-            completed: { bg: '#dcfce7', color: '#166534', label: 'Completed', icon: FaCheck },
-            rejected: { bg: '#fef2f2', color: '#991b1b', label: 'Rejected', icon: FaTimes }
+            pending: { classes: 'bg-amber-100 text-amber-800', label: 'Pending Review', icon: FaClock },
+            reviewed: { classes: 'bg-teal-100 text-teal-800', label: 'Reviewed', icon: FaCheck },
+            quoted: { classes: 'bg-teal-100 text-teal-800', label: 'Quote Ready', icon: FaQuoteRight },
+            preparing: { classes: 'bg-amber-100 text-amber-800', label: 'Preparing', icon: FaSpinner },
+            ready: { classes: 'bg-green-100 text-green-800', label: 'Ready for Pickup', icon: FaCheck },
+            completed: { classes: 'bg-green-100 text-green-800', label: 'Completed', icon: FaCheck },
+            rejected: { classes: 'bg-red-100 text-red-800', label: 'Rejected', icon: FaTimes }
         };
         const s = map[status] || map.pending;
         const Icon = s.icon;
         return (
-            <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: 4,
-                padding: '4px 12px', borderRadius: 20,
-                fontSize: 12, fontWeight: 600,
-                backgroundColor: s.bg, color: s.color
-            }}>
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${s.classes}`}>
                 <Icon size={10} /> {s.label}
             </span>
         );
     };
 
     return (
-        <div style={{ maxWidth: 900, margin: '0 auto', padding: '30px 20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <h2 style={{ fontSize: 24, fontWeight: 700, color: '#1e293b', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <FaFileMedical color={C} /> My Prescriptions
+        <div className="max-w-4xl mx-auto py-8 px-5">
+            <div className="flex justify-between items-center mb-8">
+                <h2 className="text-2xl font-bold text-slate-800 m-0 flex items-center gap-2.5">
+                    <FaFileMedical className="text-teal-600" /> My Prescriptions
                 </h2>
-                <button onClick={() => setShowForm(!showForm)} style={{
-                    padding: '10px 22px', backgroundColor: showForm ? '#64748b' : C, color: 'white',
-                    border: 'none', borderRadius: 10, cursor: 'pointer', fontSize: 14, fontWeight: 600,
-                    display: 'flex', alignItems: 'center', gap: 6
-                }}>
+                <button 
+                    onClick={() => setShowForm(!showForm)} 
+                    className={`px-5 py-2.5 text-white border-none rounded-xl cursor-pointer text-sm font-bold flex items-center gap-2 transition-all hover:-translate-y-0.5 shadow-sm hover:shadow-md ${showForm ? 'bg-slate-500 hover:bg-slate-600' : 'bg-teal-600 hover:bg-teal-700'}`}
+                >
                     {showForm ? 'Cancel' : <><FaPaperPlane size={12} /> Submit Prescription</>}
                 </button>
             </div>
 
             {showForm && (
-                <form onSubmit={handleSubmit} style={{
-                    backgroundColor: 'white', borderRadius: 14, padding: 24,
-                    marginBottom: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
-                }}>
-                    <h3 style={{ fontSize: 18, fontWeight: 600, color: '#1e293b', marginTop: 0, marginBottom: 16 }}>
+                <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 mb-8 shadow-sm border border-slate-100">
+                    <h3 className="text-lg font-bold text-slate-800 mt-0 mb-3 border-b border-slate-100 pb-3">
                         Submit a New Prescription
                     </h3>
-                    <p style={{ fontSize: 13, color: '#64748b', marginBottom: 20, lineHeight: 1.6 }}>
+                    <p className="text-sm text-slate-500 mb-6 leading-relaxed">
                         Upload your prescription image to a hosting service (e.g. Imgur, Cloudinary) and paste the URL below. Our pharmacists will review it and send you a quote.
                     </p>
 
-                    <div style={{ marginBottom: 16 }}>
-                        <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
-                            <FaImage size={12} /> Prescription Image URL *
+                    <div className="mb-5">
+                        <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1.5">
+                            <FaImage size={14} className="text-slate-400" /> Prescription Image URL *
                         </label>
                         <input
                             value={imageUrl}
                             onChange={e => setImageUrl(e.target.value)}
                             placeholder="https://example.com/prescription-image.jpg"
-                            style={{
-                                width: '100%', padding: '12px 14px', borderRadius: 10,
-                                border: '1px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box'
-                            }}
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 transition-all box-border"
                             required
                         />
                     </div>
 
                     {imageUrl && (
-                        <div style={{
-                            marginBottom: 16, borderRadius: 10, overflow: 'hidden',
-                            border: '1px solid #e2e8f0', maxHeight: 200,
-                            display: 'flex', justifyContent: 'center', backgroundColor: '#f8fafc'
-                        }}>
-                            <img src={imageUrl} alt="Preview" style={{ maxHeight: 200, objectFit: 'contain' }}
-                                onError={e => { e.currentTarget.style.display = 'none'; }} />
+                        <div className="mb-5 rounded-xl overflow-hidden border border-slate-200 max-h-[200px] flex justify-center bg-slate-50 relative p-2">
+                            <img 
+                                src={imageUrl} 
+                                alt="Preview" 
+                                className="max-h-[180px] object-contain rounded-lg"
+                                onError={e => { e.currentTarget.style.display = 'none'; }} 
+                            />
                         </div>
                     )}
 
-                    <div style={{ marginBottom: 20 }}>
-                        <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+                    <div className="mb-6">
+                        <label className="block text-sm font-bold text-slate-700 mb-2">
                             Notes (optional)
                         </label>
                         <textarea
@@ -137,62 +129,54 @@ const SubmitPrescription = () => {
                             onChange={e => setNotes(e.target.value)}
                             placeholder="Any additional notes for the pharmacist..."
                             rows={3}
-                            style={{
-                                width: '100%', padding: '12px 14px', borderRadius: 10,
-                                border: '1px solid #e2e8f0', fontSize: 14, outline: 'none',
-                                resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box'
-                            }}
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 transition-all resize-y font-sans box-border"
                         />
                     </div>
 
-                    <button type="submit" disabled={submitting} style={{
-                        padding: '12px 28px', backgroundColor: C, color: 'white',
-                        border: 'none', borderRadius: 10, cursor: submitting ? 'not-allowed' : 'pointer',
-                        fontSize: 15, fontWeight: 700, opacity: submitting ? 0.7 : 1,
-                        display: 'flex', alignItems: 'center', gap: 6
-                    }}>
-                        <FaPaperPlane size={13} /> {submitting ? 'Submitting...' : 'Submit Prescription'}
+                    <button 
+                        type="submit" 
+                        disabled={submitting} 
+                        className={`px-8 py-3.5 bg-teal-600 hover:bg-teal-700 text-white border-none rounded-xl cursor-pointer text-base font-bold flex items-center gap-2 transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 ${submitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    >
+                        <FaPaperPlane size={14} /> {submitting ? 'Submitting...' : 'Submit Prescription'}
                     </button>
                 </form>
             )}
 
             {loading ? (
-                <div style={{ textAlign: 'center', padding: 60, color: '#94a3b8' }}>Loading...</div>
+                <div className="flex justify-center items-center py-20">
+                    <div className="w-10 h-10 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin"></div>
+                </div>
             ) : prescriptions.length === 0 ? (
-                <div style={{
-                    textAlign: 'center', padding: 60, backgroundColor: 'white',
-                    borderRadius: 14, boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
-                }}>
-                    <FaFileMedical size={48} color="#cbd5e1" />
-                    <p style={{ color: '#94a3b8', marginTop: 12, fontSize: 15 }}>No prescriptions submitted yet</p>
-                    <p style={{ color: '#cbd5e1', fontSize: 13 }}>Click "Submit Prescription" to get started</p>
+                <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center">
+                    <FaFileMedical size={48} className="text-slate-300 mb-4" />
+                    <p className="text-slate-500 font-bold text-lg m-0 mb-1">No prescriptions submitted yet</p>
+                    <p className="text-slate-400 text-sm m-0">Click "Submit Prescription" to get started</p>
                 </div>
             ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div className="flex flex-col gap-4">
                     {prescriptions.map(rx => (
-                        <div key={rx._id} style={{
-                            backgroundColor: 'white', borderRadius: 14, overflow: 'hidden',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-                            border: rx.status === 'quoted' ? '2px solid #6366f1' : '2px solid transparent'
-                        }}>
-                            <div style={{ display: 'flex', gap: 16, padding: 20, flexWrap: 'wrap' }}>
-                                <div style={{
-                                    width: 120, height: 120, borderRadius: 10, overflow: 'hidden',
-                                    backgroundColor: '#f1f5f9', flexShrink: 0, display: 'flex',
-                                    justifyContent: 'center', alignItems: 'center'
-                                }}>
-                                    <img src={rx.imageUrl} alt="Prescription" style={{
-                                        width: '100%', height: '100%', objectFit: 'cover'
-                                    }} onError={e => { e.currentTarget.style.display = 'none'; }} />
+                        <div 
+                            key={rx.id} 
+                            className={`bg-white rounded-2xl overflow-hidden shadow-sm transition-all hover:shadow-md ${rx.status === 'quoted' ? 'border-2 border-teal-500' : 'border border-slate-100'}`}
+                        >
+                            <div className="flex gap-5 p-5 flex-col sm:flex-row">
+                                <div className="w-full sm:w-[120px] h-[160px] sm:h-[120px] rounded-xl overflow-hidden bg-slate-50 shrink-0 flex justify-center items-center">
+                                    <img 
+                                        src={rx.imageUrl} 
+                                        alt="Prescription" 
+                                        className="w-full h-full object-cover" 
+                                        onError={e => { e.currentTarget.style.display = 'none'; }} 
+                                    />
                                 </div>
 
-                                <div style={{ flex: 1, minWidth: 200 }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
+                                <div className="flex-1 min-w-[200px]">
+                                    <div className="flex justify-between items-start mb-3 flex-wrap gap-2">
                                         <div>
-                                            <div style={{ fontWeight: 700, color: '#1e293b', fontSize: 15, marginBottom: 4 }}>
+                                            <div className="font-bold text-slate-800 text-base mb-1">
                                                 {rx.prescriptionNumber}
                                             </div>
-                                            <div style={{ fontSize: 12, color: '#94a3b8' }}>
+                                            <div className="text-xs font-semibold text-slate-400">
                                                 {new Date(rx.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                             </div>
                                         </div>
@@ -200,59 +184,58 @@ const SubmitPrescription = () => {
                                     </div>
 
                                     {rx.notes && (
-                                        <p style={{ fontSize: 13, color: '#64748b', margin: '8px 0', lineHeight: 1.5 }}>
-                                            <strong>Your notes:</strong> {rx.notes}
+                                        <p className="text-[13px] text-slate-600 my-2 leading-relaxed">
+                                            <strong className="text-slate-700">Your notes:</strong> {rx.notes}
                                         </p>
                                     )}
 
                                     {rx.pharmacistNotes && (
-                                        <p style={{ fontSize: 13, color: '#1e40af', margin: '8px 0', lineHeight: 1.5, backgroundColor: '#eff6ff', padding: '8px 12px', borderRadius: 8 }}>
-                                            <strong>Pharmacist notes:</strong> {rx.pharmacistNotes}
+                                        <p className="text-[13px] text-teal-800 my-3 leading-relaxed bg-teal-50 p-3 rounded-xl border border-teal-100">
+                                            <strong className="text-teal-900">Pharmacist notes:</strong> {rx.pharmacistNotes}
                                         </p>
                                     )}
 
                                     {rx.rejectionReason && (
-                                        <p style={{ fontSize: 13, color: '#991b1b', margin: '8px 0', lineHeight: 1.5, backgroundColor: '#fef2f2', padding: '8px 12px', borderRadius: 8 }}>
-                                            <strong>Reason:</strong> {rx.rejectionReason}
+                                        <p className="text-[13px] text-red-800 my-3 leading-relaxed bg-red-50 p-3 rounded-xl border border-red-100">
+                                            <strong className="text-red-900">Reason:</strong> {rx.rejectionReason}
                                         </p>
                                     )}
 
                                     {rx.status === 'quoted' && rx.quotedPrice && (
-                                        <div style={{
-                                            marginTop: 12, padding: 16, backgroundColor: '#f0f9ff',
-                                            borderRadius: 10, border: '1px solid #bae6fd'
-                                        }}>
-                                            <div style={{ fontSize: 13, color: '#0369a1', marginBottom: 8, fontWeight: 600 }}>Quote Details:</div>
+                                        <div className="mt-4 p-5 bg-sky-50 rounded-xl border border-sky-200 shadow-inner">
+                                            <div className="text-sm text-sky-800 mb-3 font-bold flex items-center gap-2">
+                                                <FaQuoteRight className="text-sky-400" /> Quote Details:
+                                            </div>
+                                            
                                             {rx.items?.length > 0 && (
-                                                <div style={{ marginBottom: 10 }}>
+                                                <div className="mb-4 space-y-1">
                                                     {rx.items.map((item, i) => (
-                                                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#475569', padding: '2px 0' }}>
-                                                            <span>{item.productName} x{item.quantity}</span>
-                                                            <span>{item.price?.toFixed(2)} AED</span>
+                                                        <div key={i} className="flex justify-between text-[13px] text-slate-600 font-medium">
+                                                            <span>{item.productName} <span className="text-slate-400 text-xs mx-1">x</span>{item.quantity}</span>
+                                                            <span className="font-bold text-slate-700">{item.price?.toFixed(2)} EGP</span>
                                                         </div>
                                                     ))}
                                                 </div>
                                             )}
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 16, color: '#0c4a6e', borderTop: '1px solid #bae6fd', paddingTop: 8 }}>
+                                            
+                                            <div className="flex justify-between font-black text-lg text-sky-900 border-t-2 border-sky-200/50 pt-3">
                                                 <span>Total</span>
-                                                <span>{rx.quotedPrice?.toFixed(2)} AED</span>
+                                                <span>{rx.quotedPrice?.toFixed(2)} <span className="text-sm font-bold text-sky-700">EGP</span></span>
                                             </div>
 
                                             {!rx.customerResponse && (
-                                                <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
-                                                    <button onClick={() => handleRespond(rx._id, 'accepted')} style={{
-                                                        flex: 1, padding: '10px 16px', backgroundColor: '#16a34a', color: 'white',
-                                                        border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 14, fontWeight: 600,
-                                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
-                                                    }}>
-                                                        <FaCheck size={12} /> Accept Quote
+                                                <div className="flex gap-3 mt-5">
+                                                    <button 
+                                                        onClick={() => handleRespond(rx.id, 'accepted')} 
+                                                        className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white border-none rounded-xl cursor-pointer text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-sm hover:-translate-y-0.5 hover:shadow-md"
+                                                    >
+                                                        <FaCheck size={14} /> Accept Quote
                                                     </button>
-                                                    <button onClick={() => handleRespond(rx._id, 'rejected')} style={{
-                                                        flex: 1, padding: '10px 16px', backgroundColor: '#dc2626', color: 'white',
-                                                        border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 14, fontWeight: 600,
-                                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
-                                                    }}>
-                                                        <FaTimes size={12} /> Reject Quote
+                                                    <button 
+                                                        onClick={() => handleRespond(rx.id, 'rejected')} 
+                                                        className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white border-none rounded-xl cursor-pointer text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-sm hover:-translate-y-0.5 hover:shadow-md"
+                                                    >
+                                                        <FaTimes size={14} /> Reject Quote
                                                     </button>
                                                 </div>
                                             )}

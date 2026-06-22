@@ -43,7 +43,7 @@ const HoldOrdersModal = ({ isOpen, heldOrders, onRecall, onDelete, onClose }) =>
                                         {held.items.map(i => i.name).join(', ').substring(0, 60)}...
                                     </div>
                                     <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.primary, marginTop: 4 }}>
-                                        {held.total.toFixed(2)} AED
+                                        {held.total.toFixed(2)} EGP
                                     </div>
                                     <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
                                         {new Date(held.timestamp).toLocaleTimeString('en-US')}

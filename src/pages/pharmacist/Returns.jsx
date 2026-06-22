@@ -6,6 +6,9 @@ import { getId } from '../../utils/getId';
 import PageHeader from '../../components/common/PageHeader';
 import DataTable from '../../components/common/DataTable';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import Button from '../../components/common/Button';
+import SearchInput from '../../components/common/SearchInput';
+import InputField from '../../components/common/InputField';
 import { FaSearch, FaUndo, FaShoppingCart, FaTruck } from 'react-icons/fa';
 
 const RETURN_REASONS_SALES = [
@@ -177,7 +180,7 @@ const Returns = () => {
         {
             key: 'returnType', label: 'Type', width: 100,
             render: (val) => (
-                <span className={`badge ${val === 'sales' ? 'badge-success' : 'badge-primary'}`}>
+                <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] ${val === 'sales' ? 'badge-success' : 'badge-primary'}`}>
                     {val === 'sales' ? 'Sales' : 'Purchase'}
                 </span>
             )
@@ -206,7 +209,7 @@ const Returns = () => {
         },
         {
             key: 'refundMethod', label: 'Method', width: 100,
-            render: (val) => <span className="badge badge-neutral">{val === 'cash' ? 'Cash' : val === 'exchange' ? 'Exchange' : 'Credit'}</span>
+            render: (val) => <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] bg-slate-200 text-slate-600">{val === 'cash' ? 'Cash' : val === 'exchange' ? 'Exchange' : 'Credit'}</span>
         },
         {
             key: 'createdAt', label: 'Date', width: 120,
@@ -236,8 +239,8 @@ const Returns = () => {
 
             {/* ============ SALES RETURN TAB ============ */}
             {activeTab === 'sales' && (
-                <div className="card card-body" style={{ marginBottom: 'var(--space-6)', borderLeft: '4px solid var(--color-success)' }} id="sales-return-card">
-                    <h3 className="section-title" style={{ color: 'var(--color-success)', marginBottom: 'var(--space-2)' }}>
+                <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md p-6" style={{ marginBottom: 'var(--space-6)', borderLeft: '4px solid var(--color-success)' }} id="sales-return-card">
+                    <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2" style={{ color: 'var(--color-success)', marginBottom: 'var(--space-2)' }}>
                         <FaUndo size={14} /> New Sales Return
                     </h3>
                     <p className="text-sm text-muted" style={{ marginBottom: 'var(--space-4)' }}>
@@ -245,29 +248,25 @@ const Returns = () => {
                     </p>
 
                     <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-4)' }}>
-                        <div className="search-input-wrapper" style={{ flex: 1 }}>
-                            <FaSearch className="search-icon" />
-                            <input
-                                placeholder="Enter order number (e.g. ORD-17...)"
-                                value={orderNumber}
-                                onChange={e => setOrderNumber(e.target.value)}
-                                onKeyDown={e => e.key === 'Enter' && searchSalesOrder()}
-                                className="form-input"
-                                style={{ paddingLeft: 40 }}
-                                id="input-search-order"
-                            />
-                        </div>
-                        <button onClick={searchSalesOrder} className="btn btn-success" id="btn-search-order">
+                        <SearchInput
+                            placeholder="Enter order number (e.g. ORD-17...)"
+                            value={orderNumber}
+                            onChange={e => setOrderNumber(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && searchSalesOrder()}
+                            wrapperStyle={{ flex: 1 }}
+                            id="input-search-order"
+                        />
+                        <Button variant="success" onClick={searchSalesOrder} id="btn-search-order">
                             <FaSearch size={12} /> Search
-                        </button>
+                        </Button>
                     </div>
 
                     {foundOrder && (
-                        <div className="card" style={{ border: '1px solid var(--color-border)' }} id="found-order-details">
-                            <div className="card-body">
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md" style={{ border: '1px solid var(--color-border)' }} id="found-order-details">
+                            <div className="p-6">
                                 <div className="filter-bar" style={{ marginBottom: 'var(--space-4)' }}>
                                     <span className="text-sm text-muted">Order: <strong className="text-primary">{foundOrder.orderNumber}</strong></span>
-                                    <span className="text-sm text-muted">Total: <strong className="text-primary">{foundOrder.totalAmount?.toFixed(2)} AED</strong></span>
+                                    <span className="text-sm text-muted">Total: <strong className="text-primary">{foundOrder.totalAmount?.toFixed(2)} EGP</strong></span>
                                     <span className="text-sm text-muted">Payment: <strong className="text-primary">{foundOrder.paymentMethod}</strong></span>
                                 </div>
 
@@ -293,7 +292,7 @@ const Returns = () => {
                                                 {item.productName || item.productId?.name || 'Product'}
                                             </span>
                                             <span className="text-sm text-muted">x{item.quantity}</span>
-                                            <span className="text-sm font-semibold">{item.priceAtPurchase?.toFixed(2)} AED</span>
+                                            <span className="text-sm font-semibold">{item.priceAtPurchase?.toFixed(2)} EGP</span>
                                         </div>
                                     );
                                 })}
@@ -305,30 +304,41 @@ const Returns = () => {
                                             <div key={r.productId} style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center', marginBottom: 'var(--space-2)', fontSize: 'var(--font-size-base)' }}>
                                                 <span style={{ flex: 1, fontWeight: 'var(--font-weight-medium)' }}>{r.name}</span>
                                                 <label className="text-xs text-muted">Qty:</label>
-                                                <input
+                                                <InputField
                                                     type="number" min="1" max={r.maxQuantity} value={r.quantity}
                                                     onChange={e => updateSalesItem(r.productId, 'quantity', e.target.value)}
-                                                    className="form-input" style={{ width: 60, padding: '4px 8px', textAlign: 'center' }}
+                                                    style={{ width: 60, padding: '4px 8px', textAlign: 'center' }}
                                                 />
-                                                <select value={r.reason} onChange={e => updateSalesItem(r.productId, 'reason', e.target.value)} className="form-select" style={{ width: 'auto' }}>
-                                                    {RETURN_REASONS_SALES.map(rr => <option key={rr.value} value={rr.value}>{rr.label}</option>)}
-                                                </select>
+                                                <InputField 
+                                                    type="select" 
+                                                    value={r.reason} 
+                                                    onChange={e => updateSalesItem(r.productId, 'reason', e.target.value)} 
+                                                    style={{ width: 'auto' }}
+                                                    options={RETURN_REASONS_SALES.map(rr => ({ value: rr.value, label: rr.label }))}
+                                                />
                                             </div>
                                         ))}
                                         <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-3)', alignItems: 'center' }}>
-                                            <select value={salesRefundMethod} onChange={e => setSalesRefundMethod(e.target.value)} className="form-select" style={{ width: 'auto' }} id="select-refund-method">
-                                                <option value="cash">Cash Refund</option>
-                                                <option value="exchange">Exchange</option>
-                                            </select>
-                                            <input placeholder="Notes (optional)" value={salesNotes} onChange={e => setSalesNotes(e.target.value)} className="form-input" style={{ flex: 1 }} id="input-sales-notes" />
+                                            <InputField 
+                                                type="select" 
+                                                value={salesRefundMethod} 
+                                                onChange={e => setSalesRefundMethod(e.target.value)} 
+                                                style={{ width: 'auto' }} 
+                                                id="select-refund-method"
+                                                options={[
+                                                    { value: 'cash', label: 'Cash Refund' },
+                                                    { value: 'exchange', label: 'Exchange' }
+                                                ]}
+                                            />
+                                            <InputField placeholder="Notes (optional)" value={salesNotes} onChange={e => setSalesNotes(e.target.value)} style={{ flex: 1 }} id="input-sales-notes" />
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-4)' }}>
                                             <span style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'var(--font-weight-extrabold)', color: 'var(--color-danger)' }}>
                                                 Refund Total: {formatCurrency(salesTotalRefund)}
                                             </span>
-                                            <button onClick={submitSalesReturn} className="btn btn-success btn-lg" id="btn-confirm-sales-return">
+                                            <Button variant="success" size="lg" onClick={submitSalesReturn} id="btn-confirm-sales-return">
                                                 <FaUndo size={14} /> Confirm Return
-                                            </button>
+                                            </Button>
                                         </div>
                                     </div>
                                 )}
@@ -340,8 +350,8 @@ const Returns = () => {
 
             {/* ============ PURCHASE RETURN TAB ============ */}
             {activeTab === 'purchase' && (
-                <div className="card card-body" style={{ marginBottom: 'var(--space-6)', borderLeft: '4px solid var(--color-primary)' }} id="purchase-return-card">
-                    <h3 className="section-title" style={{ color: 'var(--color-primary)', marginBottom: 'var(--space-2)' }}>
+                <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md p-6" style={{ marginBottom: 'var(--space-6)', borderLeft: '4px solid var(--color-primary)' }} id="purchase-return-card">
+                    <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)', marginBottom: 'var(--space-2)' }}>
                         <FaUndo size={14} /> New Purchase Return
                     </h3>
                     <p className="text-sm text-muted" style={{ marginBottom: 'var(--space-4)' }}>
@@ -349,29 +359,25 @@ const Returns = () => {
                     </p>
 
                     <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-4)' }}>
-                        <div className="search-input-wrapper" style={{ flex: 1 }}>
-                            <FaSearch className="search-icon" />
-                            <input
-                                placeholder="Enter purchase invoice number..."
-                                value={invoiceNumber}
-                                onChange={e => setInvoiceNumber(e.target.value)}
-                                onKeyDown={e => e.key === 'Enter' && searchPurchaseInvoice()}
-                                className="form-input"
-                                style={{ paddingLeft: 40 }}
-                                id="input-search-purchase"
-                            />
-                        </div>
-                        <button onClick={searchPurchaseInvoice} className="btn btn-primary" id="btn-search-purchase">
+                        <SearchInput
+                            placeholder="Enter purchase invoice number..."
+                            value={invoiceNumber}
+                            onChange={e => setInvoiceNumber(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && searchPurchaseInvoice()}
+                            wrapperStyle={{ flex: 1 }}
+                            id="input-search-purchase"
+                        />
+                        <Button onClick={searchPurchaseInvoice} id="btn-search-purchase">
                             <FaSearch size={12} /> Search
-                        </button>
+                        </Button>
                     </div>
 
                     {foundPurchase && (
-                        <div className="card" style={{ border: '1px solid var(--color-border)' }} id="found-purchase-details">
-                            <div className="card-body">
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md" style={{ border: '1px solid var(--color-border)' }} id="found-purchase-details">
+                            <div className="p-6">
                                 <div className="filter-bar" style={{ marginBottom: 'var(--space-4)' }}>
                                     <span className="text-sm text-muted">Invoice: <strong className="text-primary">{foundPurchase.invoiceNumber}</strong></span>
-                                    <span className="text-sm text-muted">Total: <strong className="text-primary">{foundPurchase.totalAmount?.toFixed(2)} AED</strong></span>
+                                    <span className="text-sm text-muted">Total: <strong className="text-primary">{foundPurchase.totalAmount?.toFixed(2)} EGP</strong></span>
                                     <span className="text-sm text-muted">Status: <strong className="text-primary">{foundPurchase.status}</strong></span>
                                 </div>
 
@@ -396,7 +402,7 @@ const Returns = () => {
                                                 {item.productId?.name || 'Product'}
                                             </span>
                                             <span className="text-sm text-muted">x{item.quantity}</span>
-                                            <span className="text-sm font-semibold">{item.purchasePrice?.toFixed(2)} AED</span>
+                                            <span className="text-sm font-semibold">{item.purchasePrice?.toFixed(2)} EGP</span>
                                         </div>
                                     );
                                 })}
@@ -408,26 +414,30 @@ const Returns = () => {
                                             <div key={r.productId} style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center', marginBottom: 'var(--space-2)', fontSize: 'var(--font-size-base)' }}>
                                                 <span style={{ flex: 1, fontWeight: 'var(--font-weight-medium)' }}>{r.name}</span>
                                                 <label className="text-xs text-muted">Qty:</label>
-                                                <input
+                                                <InputField
                                                     type="number" min="1" max={r.maxQuantity} value={r.quantity}
                                                     onChange={e => updatePurchaseItem(r.productId, 'quantity', e.target.value)}
-                                                    className="form-input" style={{ width: 60, padding: '4px 8px', textAlign: 'center' }}
+                                                    style={{ width: 60, padding: '4px 8px', textAlign: 'center' }}
                                                 />
-                                                <select value={r.reason} onChange={e => updatePurchaseItem(r.productId, 'reason', e.target.value)} className="form-select" style={{ width: 'auto' }}>
-                                                    {RETURN_REASONS_PURCHASE.map(rr => <option key={rr.value} value={rr.value}>{rr.label}</option>)}
-                                                </select>
+                                                <InputField 
+                                                    type="select" 
+                                                    value={r.reason} 
+                                                    onChange={e => updatePurchaseItem(r.productId, 'reason', e.target.value)} 
+                                                    style={{ width: 'auto' }}
+                                                    options={RETURN_REASONS_PURCHASE.map(rr => ({ value: rr.value, label: rr.label }))}
+                                                />
                                             </div>
                                         ))}
                                         <div style={{ marginTop: 'var(--space-3)' }}>
-                                            <input placeholder="Notes (optional)" value={purchaseNotes} onChange={e => setPurchaseNotes(e.target.value)} className="form-input" id="input-purchase-notes" />
+                                            <InputField placeholder="Notes (optional)" value={purchaseNotes} onChange={e => setPurchaseNotes(e.target.value)} id="input-purchase-notes" />
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-4)' }}>
                                             <span style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'var(--font-weight-extrabold)', color: 'var(--color-primary)' }}>
                                                 Credit Total: {formatCurrency(purchaseTotalRefund)}
                                             </span>
-                                            <button onClick={submitPurchaseReturn} className="btn btn-primary btn-lg" id="btn-confirm-purchase-return">
+                                            <Button size="lg" onClick={submitPurchaseReturn} id="btn-confirm-purchase-return">
                                                 <FaUndo size={14} /> Confirm Return to Supplier
-                                            </button>
+                                            </Button>
                                         </div>
                                     </div>
                                 )}
@@ -440,19 +450,20 @@ const Returns = () => {
             {/* ============ RETURNS HISTORY ============ */}
             <div id="returns-history">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
-                    <h3 className="section-title" style={{ margin: 0 }}>
+                    <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2" style={{ margin: 0 }}>
                         <FaUndo color="var(--color-primary)" size={14} /> Returns History
                     </h3>
                     <div style={{ display: 'flex', gap: 'var(--space-1)' }}>
                         {[{ v: '', l: 'All' }, { v: 'sales', l: 'Sales' }, { v: 'purchase', l: 'Purchase' }].map(f => (
-                            <button
+                            <Button
                                 key={f.v}
+                                size="sm"
+                                variant={filterType === f.v ? 'primary' : 'ghost'}
                                 onClick={() => setFilterType(f.v)}
-                                className={`btn btn-sm ${filterType === f.v ? 'btn-primary' : 'btn-ghost'}`}
                                 id={`btn-filter-${f.v || 'all'}`}
                             >
                                 {f.l}
-                            </button>
+                            </Button>
                         ))}
                     </div>
                 </div>

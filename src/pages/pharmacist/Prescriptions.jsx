@@ -5,6 +5,8 @@ import { getId } from '../../utils/getId';
 import PageHeader from '../../components/common/PageHeader';
 import DataTable from '../../components/common/DataTable';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import Button from '../../components/common/Button';
+import InputField from '../../components/common/InputField';
 import { FaFileMedical, FaCheck, FaTimes, FaQuoteRight, FaEye, FaPlus, FaTrash } from 'react-icons/fa';
 
 const Prescriptions = () => {
@@ -71,7 +73,7 @@ const Prescriptions = () => {
             pending: 'Pending', reviewed: 'Reviewed', quoted: 'Quoted',
             preparing: 'Preparing', ready: 'Ready', completed: 'Completed', rejected: 'Rejected'
         };
-        return <span className={`badge badge-dot ${map[status] || 'badge-warning'}`}>{labels[status] || status}</span>;
+        return <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] badge-dot ${map[status] || 'badge-warning'}`}>{labels[status] || status}</span>;
     };
 
     const totalQuote = reviewData.items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
@@ -107,9 +109,9 @@ const Prescriptions = () => {
         {
             key: 'actions', label: 'Actions', sortable: false, noExport: true, width: 100,
             render: (_, row) => (
-                <button className="btn btn-primary btn-sm" onClick={(e) => { e.stopPropagation(); openReview(row); }}>
+                <Button size="sm" onClick={(e) => { e.stopPropagation(); openReview(row); }}>
                     <FaEye size={10} /> Review
-                </button>
+                </Button>
             )
         },
     ];
@@ -125,9 +127,9 @@ const Prescriptions = () => {
             {/* Status Filter Tabs */}
             <div style={{ display: 'flex', gap: 'var(--space-1)', marginBottom: 'var(--space-5)', flexWrap: 'wrap' }} id="rx-status-tabs">
                 {statuses.map(s => (
-                    <button key={s.value} onClick={() => setStatusFilter(s.value)} className={`btn btn-sm ${statusFilter === s.value ? 'btn-primary' : 'btn-ghost'}`}>
+                    <Button key={s.value} size="sm" variant={statusFilter === s.value ? 'primary' : 'ghost'} onClick={() => setStatusFilter(s.value)}>
                         {s.label}
-                    </button>
+                    </Button>
                 ))}
             </div>
 
@@ -147,7 +149,7 @@ const Prescriptions = () => {
                     <div className="modal-content modal-lg" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3>Review: {selected.prescriptionNumber}</h3>
-                            <button className="btn btn-ghost btn-icon" onClick={() => setSelected(null)}><FaTimes size={16} /></button>
+                            <Button variant="ghost" size="icon" onClick={() => setSelected(null)}><FaTimes size={16} /></Button>
                         </div>
                         <div className="modal-body">
                             {/* Prescription Info */}
@@ -163,7 +165,7 @@ const Prescriptions = () => {
                                     <div><strong>Email:</strong> {selected.customerId?.email || 'N/A'}</div>
                                     <div><strong>Date:</strong> {new Date(selected.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
                                     {selected.notes && (
-                                        <div className="alert-banner alert-banner-info" style={{ marginTop: 'var(--space-2)' }}>
+                                        <div className="p-3 px-4 rounded-md text-sm font-semibold flex items-center gap-2 bg-cyan-50 text-cyan-800" style={{ marginTop: 'var(--space-2)' }}>
                                             <strong>Patient Notes:</strong> {selected.notes}
                                         </div>
                                     )}
@@ -171,59 +173,52 @@ const Prescriptions = () => {
                             </div>
 
                             {/* Pharmacist Notes */}
-                            <div className="form-group" style={{ marginBottom: 'var(--space-4)' }}>
-                                <label className="form-label">Pharmacist Notes</label>
-                                <textarea value={reviewData.pharmacistNotes} onChange={e => setReviewData(prev => ({ ...prev, pharmacistNotes: e.target.value }))}
-                                    placeholder="Add your notes..." rows={3} className="form-textarea" />
-                            </div>
+                            <InputField type="textarea" label="Pharmacist Notes" value={reviewData.pharmacistNotes} onChange={e => setReviewData(prev => ({ ...prev, pharmacistNotes: e.target.value }))} placeholder="Add your notes..." rows={3} wrapperStyle={{ marginBottom: 'var(--space-4)' }} />
 
                             {/* Quote Items */}
                             <div style={{ marginBottom: 'var(--space-4)' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
-                                    <label className="form-label" style={{ margin: 0 }}>Quote Items</label>
-                                    <button onClick={addItem} className="btn btn-success btn-sm"><FaPlus size={10} /> Add Item</button>
+                                    <label className="text-sm font-semibold text-slate-600 tracking-[0.01em]" style={{ margin: 0 }}>Quote Items</label>
+                                    <Button variant="success" size="sm" onClick={addItem}><FaPlus size={10} /> Add Item</Button>
                                 </div>
                                 {reviewData.items.map((item, i) => (
                                     <div key={i} style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-2)', alignItems: 'center' }}>
-                                        <input value={item.productName} onChange={e => updateItem(i, 'productName', e.target.value)} placeholder="Product name" className="form-input" style={{ flex: 2 }} />
-                                        <input type="number" min="1" value={item.quantity} onChange={e => updateItem(i, 'quantity', e.target.value)} placeholder="Qty" className="form-input" style={{ width: 60, textAlign: 'center' }} />
-                                        <input type="number" min="0" step="0.01" value={item.price} onChange={e => updateItem(i, 'price', e.target.value)} placeholder="Price" className="form-input" style={{ width: 90, textAlign: 'center' }} />
-                                        <button onClick={() => removeItem(i)} className="btn btn-ghost btn-icon-sm" style={{ color: 'var(--color-danger)' }}><FaTrash size={10} /></button>
+                                        <InputField value={item.productName} onChange={e => updateItem(i, 'productName', e.target.value)} placeholder="Product name" wrapperStyle={{ flex: 2 }} />
+                                        <InputField type="number" min="1" value={item.quantity} onChange={e => updateItem(i, 'quantity', e.target.value)} placeholder="Qty" style={{ width: 60, textAlign: 'center' }} />
+                                        <InputField type="number" min="0" step="0.01" value={item.price} onChange={e => updateItem(i, 'price', e.target.value)} placeholder="Price" style={{ width: 90, textAlign: 'center' }} />
+                                        <Button variant="ghost" size="icon" onClick={() => removeItem(i)} style={{ color: 'var(--color-danger)' }}><FaTrash size={10} /></Button>
                                     </div>
                                 ))}
                                 {reviewData.items.length > 0 && (
                                     <div style={{ display: 'flex', justifyContent: 'flex-end', padding: 'var(--space-2) var(--space-3)', background: 'var(--color-bg-muted)', borderRadius: 'var(--radius-md)', marginTop: 'var(--space-2)' }}>
-                                        <span style={{ fontSize: 'var(--font-size-md)', fontWeight: 700 }}>Total: {totalQuote.toFixed(2)} AED</span>
+                                        <span style={{ fontSize: 'var(--font-size-md)', fontWeight: 700 }}>Total: {totalQuote.toFixed(2)} EGP</span>
                                     </div>
                                 )}
                             </div>
 
                             {/* Rejection Reason */}
                             {selected.status !== 'completed' && selected.status !== 'rejected' && (
-                                <div className="form-group" style={{ marginBottom: 'var(--space-4)' }}>
-                                    <label className="form-label">Rejection Reason (if rejecting)</label>
-                                    <input value={reviewData.rejectionReason} onChange={e => setReviewData(prev => ({ ...prev, rejectionReason: e.target.value }))} placeholder="Reason..." className="form-input" />
-                                </div>
+                                <InputField label="Rejection Reason (if rejecting)" value={reviewData.rejectionReason} onChange={e => setReviewData(prev => ({ ...prev, rejectionReason: e.target.value }))} placeholder="Reason..." wrapperStyle={{ marginBottom: 'var(--space-4)' }} />
                             )}
 
                             {/* Actions */}
                             <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', paddingTop: 'var(--space-2)' }}>
                                 {selected.status === 'pending' && (
                                     <>
-                                        <button className="btn btn-primary" onClick={() => handleSave('quoted')} disabled={saving}><FaQuoteRight size={12} /> Send Quote</button>
-                                        <button className="btn btn-danger" onClick={() => handleSave('rejected')} disabled={saving}><FaTimes size={12} /> Reject</button>
+                                        <Button onClick={() => handleSave('quoted')} disabled={saving}><FaQuoteRight size={12} /> Send Quote</Button>
+                                        <Button variant="danger" onClick={() => handleSave('rejected')} disabled={saving}><FaTimes size={12} /> Reject</Button>
                                     </>
                                 )}
                                 {selected.status === 'quoted' && selected.customerResponse === 'accepted' && (
-                                    <button className="btn btn-success" onClick={() => handleSave('ready')} disabled={saving}><FaCheck size={12} /> Mark Ready</button>
+                                    <Button variant="success" onClick={() => handleSave('ready')} disabled={saving}><FaCheck size={12} /> Mark Ready</Button>
                                 )}
                                 {selected.status === 'preparing' && (
-                                    <button className="btn btn-success" onClick={() => handleSave('ready')} disabled={saving}><FaCheck size={12} /> Mark Ready</button>
+                                    <Button variant="success" onClick={() => handleSave('ready')} disabled={saving}><FaCheck size={12} /> Mark Ready</Button>
                                 )}
                                 {selected.status === 'ready' && (
-                                    <button className="btn btn-success" onClick={() => handleSave('completed')} disabled={saving}><FaCheck size={12} /> Complete</button>
+                                    <Button variant="success" onClick={() => handleSave('completed')} disabled={saving}><FaCheck size={12} /> Complete</Button>
                                 )}
-                                <button className="btn btn-ghost" onClick={() => handleSave(selected.status)} disabled={saving}><FaCheck size={12} /> Save Notes</button>
+                                <Button variant="ghost" onClick={() => handleSave(selected.status)} disabled={saving}><FaCheck size={12} /> Save Notes</Button>
                             </div>
                         </div>
                     </div>

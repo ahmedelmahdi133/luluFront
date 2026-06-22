@@ -1,0 +1,28 @@
+/* Fallback utilities to guarantee button visibility if Tailwind compiler misses them */
+.bg-teal-600 { background-color: #0d9488 !important; }
+.hover\:bg-teal-700:hover { background-color: #0f766e !important; }
+.text-teal-600 { color: #0d9488 !important; }
+
+.bg-indigo-600 { background-color: #4f46e5 !important; }
+.hover\:bg-indigo-700:hover { background-color: #4338ca !important; }
+
+.bg-emerald-600 { background-color: #059669 !important; }
+.hover\:bg-emerald-700:hover { background-color: #047857 !important; }
+
+.bg-green-600 { background-color: #16a34a !important; }
+.hover\:bg-green-700:hover { background-color: #15803d !important; }
+
+.bg-red-600 { background-color: #dc2626 !important; }
+.hover\:bg-red-700:hover { background-color: #b91c1c !important; }
+
+.bg-slate-800 { background-color: #1e293b !important; }
+.hover\:bg-slate-900:hover { background-color: #0f172a !important; }
+
+.bg-slate-500 { background-color: #64748b !important; }
+.hover\:bg-slate-600:hover { background-color: #475569 !important; }
+
+.bg-slate-400 { background-color: #94a3b8 !important; }
+.bg-slate-200 { background-color: #e2e8f0 !important; }
+.text-slate-400 { color: #94a3b8 !important; }
+
+.text-white { color: #ffffff !important; }

@@ -8,6 +8,8 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PageHeader from '../../components/common/PageHeader';
 import DataTable from '../../components/common/DataTable';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import Button from '../../components/common/Button';
+import InputField from '../../components/common/InputField';
 import { FaPlus, FaTrash, FaTimes, FaMoneyBillWave } from 'react-icons/fa';
 
 const Expenses = () => {
@@ -60,16 +62,16 @@ const Expenses = () => {
         { key: 'amount', label: 'Amount', width: 120, render: (val) => <span className="cell-danger">{formatCurrency(val)}</span> },
         {
             key: 'category', label: 'Category', width: 130,
-            render: (val) => <span className="badge badge-neutral">{getExpenseCategoryLabel(val)}</span>
+            render: (val) => <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] bg-slate-200 text-slate-600">{getExpenseCategoryLabel(val)}</span>
         },
         { key: 'date', label: 'Date', width: 160, render: (val) => formatDateTime(val) },
         { key: 'pharmacistId', label: 'Recorded By', width: 130, render: (val) => val?.name || '—' },
         {
             key: 'actions', label: '', width: 60, sortable: false, noExport: true,
             render: (_, row) => (
-                <button className="btn btn-ghost btn-icon-sm" onClick={(e) => { e.stopPropagation(); setDeleteTarget(getId(row)); }} title="Delete">
+                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setDeleteTarget(getId(row)); }} title="Delete">
                     <FaTrash size={12} color="var(--color-danger)" />
-                </button>
+                </Button>
             )
         },
     ];
@@ -81,49 +83,42 @@ const Expenses = () => {
                 subtitle={`Total: ${formatCurrency(totalAmount)}`}
                 breadcrumbs={[{ label: 'Finance', to: '/expenses' }, { label: 'Expenses' }]}
                 actions={
-                    <button className={`btn ${showForm ? 'btn-ghost' : 'btn-primary'}`} onClick={() => setShowForm(!showForm)} id="btn-add-expense">
+                    <Button variant={showForm ? 'ghost' : 'primary'} onClick={() => setShowForm(!showForm)} id="btn-add-expense">
                         {showForm ? <><FaTimes size={13} /> Cancel</> : <><FaPlus size={13} /> Record Expense</>}
-                    </button>
+                    </Button>
                 }
             />
 
             {/* Add Expense Form */}
             {showForm && (
-                <div className="card" style={{
+                <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md" style={{
                     marginBottom: 'var(--space-5)',
                     borderLeft: '4px solid var(--color-primary)',
                     animation: 'fadeInDown var(--transition-slow) ease',
                 }} id="expense-form">
-                    <div className="card-body">
+                    <div className="p-6">
                         <h3 style={{ margin: '0 0 var(--space-4)', fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-bold)' }}>
                             Record New Expense
                         </h3>
                         <form onSubmit={handleSubmit}>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 'var(--space-4)' }}>
-                                <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                                    <label className="form-label">Description</label>
-                                    <input required placeholder="e.g. Electricity bill" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="form-input" id="expense-description" />
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Amount</label>
-                                    <input type="number" required min="0" placeholder="0" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} className="form-input" id="expense-amount" />
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Category</label>
-                                    <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} className="form-select" id="expense-category">
-                                        {EXPENSE_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                                    </select>
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Date</label>
-                                    <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} className="form-input" id="expense-date" />
-                                </div>
+                                <InputField label="Description" required placeholder="e.g. Electricity bill" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} id="expense-description" wrapperStyle={{ gridColumn: 'span 2' }} />
+                                <InputField label="Amount" type="number" required min="0" placeholder="0" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} id="expense-amount" />
+                                <InputField 
+                                    type="select" 
+                                    label="Category" 
+                                    value={form.category} 
+                                    onChange={e => setForm({ ...form, category: e.target.value })} 
+                                    id="expense-category"
+                                    options={EXPENSE_CATEGORIES.map(c => ({ value: c.value, label: c.label }))}
+                                />
+                                <InputField type="date" label="Date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} id="expense-date" />
                             </div>
                             <div style={{ marginTop: 'var(--space-5)', display: 'flex', gap: 'var(--space-3)' }}>
-                                <button type="submit" className="btn btn-primary" id="btn-save-expense">
+                                <Button type="submit" id="btn-save-expense">
                                     <FaPlus size={12} /> Record Expense
-                                </button>
-                                <button type="button" className="btn btn-ghost" onClick={() => setShowForm(false)}>Cancel</button>
+                                </Button>
+                                <Button variant="ghost" type="button" onClick={() => setShowForm(false)}>Cancel</Button>
                             </div>
                         </form>
                     </div>
@@ -132,14 +127,17 @@ const Expenses = () => {
 
             {/* Filters */}
             <div className="filter-bar" style={{ marginBottom: 'var(--space-5)' }} id="expenses-filters">
-                <input type="date" value={filter.startDate} onChange={e => setFilter({ ...filter, startDate: e.target.value })} className="form-input" style={{ width: 160 }} />
-                <input type="date" value={filter.endDate} onChange={e => setFilter({ ...filter, endDate: e.target.value })} className="form-input" style={{ width: 160 }} />
-                <select value={filter.category} onChange={e => setFilter({ ...filter, category: e.target.value })} className="form-select" style={{ width: 160 }}>
-                    <option value="">All Categories</option>
-                    {EXPENSE_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
+                <InputField type="date" value={filter.startDate} onChange={e => setFilter({ ...filter, startDate: e.target.value })} style={{ width: 160 }} />
+                <InputField type="date" value={filter.endDate} onChange={e => setFilter({ ...filter, endDate: e.target.value })} style={{ width: 160 }} />
+                <InputField 
+                    type="select" 
+                    value={filter.category} 
+                    onChange={e => setFilter({ ...filter, category: e.target.value })} 
+                    style={{ width: 160 }}
+                    options={[{ value: '', label: 'All Categories' }, ...EXPENSE_CATEGORIES.map(c => ({ value: c.value, label: c.label }))]}
+                />
                 <div style={{ marginLeft: 'auto' }}>
-                    <div className="badge badge-danger" style={{ fontSize: 'var(--font-size-md)', padding: '6px 14px' }}>
+                    <div className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] bg-red-100 text-red-800" style={{ fontSize: 'var(--font-size-md)', padding: '6px 14px' }}>
                         <FaMoneyBillWave size={13} /> Total: {formatCurrency(totalAmount)}
                     </div>
                 </div>

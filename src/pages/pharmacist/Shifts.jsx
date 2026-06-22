@@ -6,6 +6,8 @@ import { getId } from '../../utils/getId';
 import PageHeader from '../../components/common/PageHeader';
 import DataTable from '../../components/common/DataTable';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import Button from '../../components/common/Button';
+import InputField from '../../components/common/InputField';
 import { FaClock, FaPlay, FaStop } from 'react-icons/fa';
 
 const Shifts = () => {
@@ -81,7 +83,7 @@ const Shifts = () => {
             key: 'status', label: 'Status', width: 100,
             render: (val) => {
                 const sc = getStatusColor(val);
-                return <span className={`badge ${sc.cls}`}>{getStatusLabel(val)}</span>;
+                return <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] ${sc.cls}`}>{getStatusLabel(val)}</span>;
             }
         },
     ];
@@ -97,23 +99,19 @@ const Shifts = () => {
             {/* Shift Control Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: currentShift ? '1fr 1fr' : '1fr', gap: 'var(--space-5)', marginBottom: 'var(--space-6)' }} id="shift-controls">
                 {!currentShift ? (
-                    <div className="card card-body" style={{ borderLeft: '4px solid var(--color-success)' }} id="shift-open-card">
-                        <h3 className="section-title" style={{ color: 'var(--color-success)' }}>
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md p-6" style={{ borderLeft: '4px solid var(--color-success)' }} id="shift-open-card">
+                        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2" style={{ color: 'var(--color-success)' }}>
                             <FaPlay size={14} /> Open New Shift
                         </h3>
-                        <div className="form-group" style={{ marginBottom: 'var(--space-4)' }}>
-                            <label className="form-label">Starting Cash in Drawer</label>
-                            <input type="number" min="0" value={startingCash} onChange={e => setStartingCash(e.target.value)}
-                                placeholder="0" className="form-input" style={{ fontSize: 'var(--font-size-xl)', textAlign: 'center', fontWeight: 700 }} id="shift-starting-cash" />
-                        </div>
-                        <button onClick={openShift} className="btn btn-success btn-lg w-full" id="btn-open-shift">
+                        <InputField label="Starting Cash in Drawer" type="number" min="0" value={startingCash} onChange={e => setStartingCash(e.target.value)} placeholder="0" style={{ fontSize: 'var(--font-size-xl)', textAlign: 'center', fontWeight: 700 }} id="shift-starting-cash" wrapperStyle={{ marginBottom: 'var(--space-4)' }} />
+                        <Button variant="success" size="lg" onClick={openShift} style={{ width: '100%' }} id="btn-open-shift">
                             <FaPlay size={14} /> Open Shift
-                        </button>
+                        </Button>
                     </div>
                 ) : (
                     <>
-                        <div className="card card-body" style={{ borderLeft: '4px solid var(--color-success)' }} id="shift-current-card">
-                            <h3 className="section-title" style={{ color: 'var(--color-success)' }}>
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md p-6" style={{ borderLeft: '4px solid var(--color-success)' }} id="shift-current-card">
+                            <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2" style={{ color: 'var(--color-success)' }}>
                                 <FaClock /> Current Shift
                             </h3>
                             <div style={{ fontSize: 'var(--font-size-md)', lineHeight: 2.4 }}>
@@ -123,23 +121,15 @@ const Shifts = () => {
                                 <div><strong>Invoices:</strong> {currentShift.totalOrders || 0}</div>
                             </div>
                         </div>
-                        <div className="card card-body" style={{ borderLeft: '4px solid var(--color-danger)' }} id="shift-close-card">
-                            <h3 className="section-title" style={{ color: 'var(--color-danger)' }}>
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md p-6" style={{ borderLeft: '4px solid var(--color-danger)' }} id="shift-close-card">
+                            <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2" style={{ color: 'var(--color-danger)' }}>
                                 <FaStop /> Close Shift
                             </h3>
-                            <div className="form-group" style={{ marginBottom: 'var(--space-3)' }}>
-                                <label className="form-label">Actual Cash in Drawer</label>
-                                <input type="number" min="0" value={endingCash} onChange={e => setEndingCash(e.target.value)}
-                                    placeholder="0" className="form-input" style={{ fontSize: 'var(--font-size-xl)', textAlign: 'center', fontWeight: 700 }} id="shift-ending-cash" />
-                            </div>
-                            <div className="form-group" style={{ marginBottom: 'var(--space-4)' }}>
-                                <label className="form-label">Notes (optional)</label>
-                                <input value={closeNotes} onChange={e => setCloseNotes(e.target.value)}
-                                    placeholder="Shift notes..." className="form-input" id="shift-close-notes" />
-                            </div>
-                            <button onClick={closeShift} className="btn btn-danger btn-lg w-full" id="btn-close-shift">
+                            <InputField label="Actual Cash in Drawer" type="number" min="0" value={endingCash} onChange={e => setEndingCash(e.target.value)} placeholder="0" style={{ fontSize: 'var(--font-size-xl)', textAlign: 'center', fontWeight: 700 }} id="shift-ending-cash" wrapperStyle={{ marginBottom: 'var(--space-3)' }} />
+                            <InputField label="Notes (optional)" value={closeNotes} onChange={e => setCloseNotes(e.target.value)} placeholder="Shift notes..." id="shift-close-notes" wrapperStyle={{ marginBottom: 'var(--space-4)' }} />
+                            <Button variant="danger" size="lg" onClick={closeShift} style={{ width: '100%' }} id="btn-close-shift">
                                 <FaStop size={14} /> Close Shift
-                            </button>
+                            </Button>
                         </div>
                     </>
                 )}

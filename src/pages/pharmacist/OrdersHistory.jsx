@@ -5,6 +5,8 @@ import { formatDateTime, formatCurrency, getStatusLabel, getStatusColor, getPaym
 import { getId } from '../../utils/getId';
 import PageHeader from '../../components/common/PageHeader';
 import DataTable from '../../components/common/DataTable';
+import Button from '../../components/common/Button';
+import InputField from '../../components/common/InputField';
 import { FaEye, FaTimes, FaHistory } from 'react-icons/fa';
 
 const OrdersHistory = () => {
@@ -74,35 +76,35 @@ const OrdersHistory = () => {
         { key: 'createdAt', label: 'Date', render: (val) => formatDateTime(val), width: 160 },
         {
             key: 'orderType', label: 'Type', width: 100,
-            render: (val) => <span className={`badge ${val === 'POS' ? 'badge-primary' : 'badge-success'}`}>{val === 'POS' ? 'POS' : 'Online'}</span>
+            render: (val) => <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] ${val === 'POS' ? 'badge-primary' : 'badge-success'}`}>{val === 'POS' ? 'POS' : 'Online'}</span>
         },
         {
             key: 'status', label: 'Status', width: 110,
-            render: (val) => { const sc = getStatusColor(val); return <span className={`badge ${sc.cls}`}>{getStatusLabel(val)}</span>; }
+            render: (val) => { const sc = getStatusColor(val); return <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] ${sc.cls}`}>{getStatusLabel(val)}</span>; }
         },
         { key: 'totalAmount', label: 'Total', render: (val) => <span className="cell-bold" style={{ color: 'var(--color-primary)' }}>{formatCurrency(val)}</span>, width: 120 },
         {
             key: 'paymentMethod', label: 'Payment', width: 130,
-            render: (val, row) => val === 'pending' ? <span className="badge badge-warning">Pending ({(row.dueAmount ?? row.totalAmount)?.toFixed?.(2)})</span> : getPaymentMethodLabel(val)
+            render: (val, row) => val === 'pending' ? <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] bg-amber-100 text-amber-900">Pending ({(row.dueAmount ?? row.totalAmount)?.toFixed?.(2)})</span> : getPaymentMethodLabel(val)
         },
         {
             key: 'actions', label: 'Actions', sortable: false, noExport: true, width: 200,
             render: (_, row) => (
                 <div style={{ display: 'flex', gap: 'var(--space-1)', flexWrap: 'wrap' }}>
-                    <button className="btn btn-ghost btn-sm" onClick={(e) => { e.stopPropagation(); setSelectedOrder(row); }}>
+                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setSelectedOrder(row); }}>
                         <FaEye size={12} /> Details
-                    </button>
+                    </Button>
                     {row.orderType === 'ONLINE' && row.status === 'pending' && (
                         <>
-                            <button className="btn btn-sm" style={{ background: 'var(--color-info-light)', color: 'var(--color-info-dark)' }} onClick={(e) => { e.stopPropagation(); updateStatus(getId(row), 'processing'); }}>Process</button>
-                            <button className="btn btn-sm" style={{ background: 'var(--color-danger-light)', color: 'var(--color-danger-dark)' }} onClick={(e) => { e.stopPropagation(); updateStatus(getId(row), 'cancelled'); }}>Cancel</button>
+                            <Button size="sm" style={{ background: 'var(--color-info-light)', color: 'var(--color-info-dark)', borderColor: 'transparent' }} onClick={(e) => { e.stopPropagation(); updateStatus(getId(row), 'processing'); }}>Process</Button>
+                            <Button size="sm" style={{ background: 'var(--color-danger-light)', color: 'var(--color-danger-dark)', borderColor: 'transparent' }} onClick={(e) => { e.stopPropagation(); updateStatus(getId(row), 'cancelled'); }}>Cancel</Button>
                         </>
                     )}
                     {row.status === 'processing' && (
-                        <button className="btn btn-sm" style={{ background: 'var(--color-success-light)', color: 'var(--color-success-dark)' }} onClick={(e) => { e.stopPropagation(); updateStatus(getId(row), 'delivered'); }}>Delivered</button>
+                        <Button size="sm" style={{ background: 'var(--color-success-light)', color: 'var(--color-success-dark)', borderColor: 'transparent' }} onClick={(e) => { e.stopPropagation(); updateStatus(getId(row), 'delivered'); }}>Delivered</Button>
                     )}
                     {(row.paymentMethod === 'pending' || (row.dueAmount || 0) > 0) && (
-                        <button className="btn btn-sm" style={{ background: 'var(--color-warning-light)', color: 'var(--color-warning-dark)' }} onClick={(e) => { e.stopPropagation(); settleInvoice(row); }}>Settle</button>
+                        <Button size="sm" style={{ background: 'var(--color-warning-light)', color: 'var(--color-warning-dark)', borderColor: 'transparent' }} onClick={(e) => { e.stopPropagation(); settleInvoice(row); }}>Settle</Button>
                     )}
                 </div>
             )
@@ -119,21 +121,33 @@ const OrdersHistory = () => {
 
             {/* Filters */}
             <div className="filter-bar" style={{ marginBottom: 'var(--space-5)' }}>
-                <select value={filter.orderType} onChange={e => setFilter({ ...filter, orderType: e.target.value })} className="form-select" style={{ width: 160 }}>
-                    <option value="">All Types</option>
-                    <option value="POS">POS</option>
-                    <option value="ONLINE">Online</option>
-                </select>
-                <select value={filter.status} onChange={e => setFilter({ ...filter, status: e.target.value })} className="form-select" style={{ width: 160 }}>
-                    <option value="">All Statuses</option>
-                    <option value="pending">Pending</option>
-                    <option value="processing">Processing</option>
-                    <option value="completed">Completed</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="cancelled">Cancelled</option>
-                </select>
-                <input type="date" value={filter.startDate} onChange={e => setFilter({ ...filter, startDate: e.target.value })} className="form-input" style={{ width: 160 }} />
-                <input type="date" value={filter.endDate} onChange={e => setFilter({ ...filter, endDate: e.target.value })} className="form-input" style={{ width: 160 }} />
+                <InputField 
+                    type="select" 
+                    value={filter.orderType} 
+                    onChange={e => setFilter({ ...filter, orderType: e.target.value })} 
+                    style={{ width: 160 }}
+                    options={[
+                        { value: '', label: 'All Types' },
+                        { value: 'POS', label: 'POS' },
+                        { value: 'ONLINE', label: 'Online' }
+                    ]}
+                />
+                <InputField 
+                    type="select" 
+                    value={filter.status} 
+                    onChange={e => setFilter({ ...filter, status: e.target.value })} 
+                    style={{ width: 160 }}
+                    options={[
+                        { value: '', label: 'All Statuses' },
+                        { value: 'pending', label: 'Pending' },
+                        { value: 'processing', label: 'Processing' },
+                        { value: 'completed', label: 'Completed' },
+                        { value: 'delivered', label: 'Delivered' },
+                        { value: 'cancelled', label: 'Cancelled' }
+                    ]}
+                />
+                <InputField type="date" value={filter.startDate} onChange={e => setFilter({ ...filter, startDate: e.target.value })} style={{ width: 160 }} />
+                <InputField type="date" value={filter.endDate} onChange={e => setFilter({ ...filter, endDate: e.target.value })} style={{ width: 160 }} />
             </div>
 
             <DataTable
@@ -152,20 +166,20 @@ const OrdersHistory = () => {
                     <div className="modal-content modal-lg" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3>Invoice {selectedOrder.orderNumber}</h3>
-                            <button className="btn btn-ghost btn-icon" onClick={() => setSelectedOrder(null)}><FaTimes size={16} /></button>
+                            <Button variant="ghost" size="icon" onClick={() => setSelectedOrder(null)}><FaTimes size={16} /></Button>
                         </div>
                         <div className="modal-body">
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)', marginBottom: 'var(--space-5)', fontSize: 'var(--font-size-md)' }}>
                                 <div><strong>Date:</strong> {formatDateTime(selectedOrder.createdAt)}</div>
                                 <div><strong>Type:</strong> {selectedOrder.orderType === 'POS' ? 'POS Sale' : 'Online'}</div>
-                                <div><strong>Status:</strong> <span className={`badge ${getStatusColor(selectedOrder.status).cls}`}>{getStatusLabel(selectedOrder.status)}</span></div>
+                                <div><strong>Status:</strong> <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] ${getStatusColor(selectedOrder.status).cls}`}>{getStatusLabel(selectedOrder.status)}</span></div>
                                 <div><strong>Cashier:</strong> {selectedOrder.pharmacistId?.name || selectedOrder.pharmacist?.name || '—'}</div>
                                 {selectedOrder.customerPhone && <div><strong>Phone:</strong> {selectedOrder.customerPhone}</div>}
                                 {selectedOrder.deliveryAddress && <div><strong>Address:</strong> {selectedOrder.deliveryAddress}</div>}
                                 {selectedOrder.notes && <div style={{ gridColumn: 'span 2' }}><strong>Notes:</strong> {selectedOrder.notes}</div>}
                             </div>
 
-                            <table className="data-table" style={{ fontSize: 'var(--font-size-sm)' }}>
+                            <table className="w-full border-collapse text-sm" style={{ fontSize: 'var(--font-size-sm)' }}>
                                 <thead>
                                     <tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>
                                 </thead>

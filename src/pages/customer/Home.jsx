@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/axios';
-import { COLORS } from '../../utils/constants';
 import { FaPills, FaPumpSoap, FaLeaf, FaArrowRight, FaShoppingBag, FaTruck, FaUserMd, FaShieldAlt } from 'react-icons/fa';
 
 const Home = () => {
@@ -13,38 +12,26 @@ const Home = () => {
         api.get('/store/products?limit=8').then(r => setFeaturedProducts(r.data.data)).catch(() => {});
     }, []);
 
-    const C = COLORS.customerPrimary;
-
     return (
         <div>
-            <div style={{
-                background: `linear-gradient(135deg, ${C} 0%, ${COLORS.customerPrimaryDark} 100%)`,
-                padding: '72px 20px', textAlign: 'center', color: 'white'
-            }}>
-                <div style={{ maxWidth: 700, margin: '0 auto' }}>
-                    <h1 style={{ fontSize: 38, fontWeight: 900, marginBottom: 14 }}>Your Trusted Online Pharmacy</h1>
-                    <p style={{ fontSize: 18, opacity: 0.95, marginBottom: 28, lineHeight: 1.6 }}>
+            {/* Hero Section */}
+            <div className="bg-gradient-to-br from-teal-600 to-teal-800 py-20 px-5 text-center text-white">
+                <div className="max-w-3xl mx-auto">
+                    <h1 className="text-4xl md:text-5xl font-black mb-4 leading-tight">Your Trusted Online Pharmacy</h1>
+                    <p className="text-lg md:text-xl text-teal-100 mb-8 leading-relaxed max-w-2xl mx-auto">
                         Order medicines, vitamins, and personal care products with safe handling and fast delivery.
                     </p>
-                    <Link to="/store" style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 8,
-                        padding: '14px 32px', backgroundColor: 'white', color: C,
-                        borderRadius: 12, textDecoration: 'none', fontWeight: 700, fontSize: 16,
-                        boxShadow: '0 4px 15px rgba(0,0,0,0.15)'
-                    }}>
+                    <Link to="/store" className="inline-flex items-center gap-2 px-8 py-3.5 bg-white text-teal-600 rounded-xl font-bold text-lg no-underline shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.2)] hover:-translate-y-1 transition-all duration-300">
                         <FaShoppingBag /> Browse Products
                     </Link>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: 28, flexWrap: 'wrap' }}>
+                <div className="flex justify-center gap-4 mt-10 flex-wrap">
                     {[
                         { icon: FaTruck, label: 'Fast Delivery' },
                         { icon: FaUserMd, label: 'Pharmacist Support' },
                         { icon: FaShieldAlt, label: 'Secure Ordering' }
                     ].map((item) => (
-                        <div key={item.label} style={{
-                            display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px',
-                            borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.16)', fontSize: 13, fontWeight: 600
-                        }}>
+                        <div key={item.label} className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm text-sm font-semibold border border-white/20">
                             <item.icon />
                             <span>{item.label}</span>
                         </div>
@@ -52,34 +39,31 @@ const Home = () => {
                 </div>
             </div>
 
-            <div className="customer-page">
+            {/* Main Content */}
+            <div className="max-w-7xl mx-auto px-4 py-12">
                 {categories.length > 0 && (
-                    <section style={{ marginBottom: 48 }}>
-                        <h2 className="section-title" style={{ marginBottom: 20 }}>Categories</h2>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 14 }}>
+                    <section className="mb-16">
+                        <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">Categories</h2>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                             {categories.map((cat, i) => {
                                 const icons = [FaPills, FaPumpSoap, FaLeaf, FaPills, FaPumpSoap, FaLeaf];
-                                const colors = ['#2563eb', '#db2777', '#16a34a', '#7c3aed', '#f59e0b', '#0891b2'];
+                                const colorClasses = [
+                                    { bg: 'bg-teal-50', text: 'text-teal-600', border: 'hover:border-teal-500' },
+                                    { bg: 'bg-pink-50', text: 'text-pink-600', border: 'hover:border-pink-500' },
+                                    { bg: 'bg-green-50', text: 'text-green-600', border: 'hover:border-green-500' },
+                                    { bg: 'bg-purple-50', text: 'text-purple-600', border: 'hover:border-purple-500' },
+                                    { bg: 'bg-amber-50', text: 'text-amber-600', border: 'hover:border-amber-500' },
+                                    { bg: 'bg-cyan-50', text: 'text-cyan-600', border: 'hover:border-cyan-500' },
+                                ];
                                 const Icon = icons[i % icons.length];
-                                const clr = colors[i % colors.length];
+                                const theme = colorClasses[i % colorClasses.length];
+                                
                                 return (
-                                    <Link key={cat._id} to={`/store?category=${cat._id}`} style={{
-                                        padding: 20, backgroundColor: 'white', borderRadius: 14,
-                                        textDecoration: 'none', textAlign: 'center',
-                                        boxShadow: '0 1px 3px rgba(0,0,0,0.06)', transition: 'all 0.2s',
-                                        border: '2px solid transparent'
-                                    }}
-                                        onMouseOver={e => { e.currentTarget.style.borderColor = clr; e.currentTarget.style.transform = 'translateY(-3px)'; }}
-                                        onMouseOut={e => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.transform = 'none'; }}
-                                    >
-                                        <div style={{
-                                            width: 56, height: 56, borderRadius: '50%',
-                                            backgroundColor: `${clr}15`, display: 'flex',
-                                            justifyContent: 'center', alignItems: 'center', margin: '0 auto 10px'
-                                        }}>
-                                            <Icon size={24} color={clr} />
+                                    <Link key={cat.id} to={`/store?category=${cat.id}`} className={`p-5 bg-white rounded-2xl no-underline text-center shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:-translate-y-1 ${theme.border}`}>
+                                        <div className={`w-14 h-14 mx-auto rounded-full ${theme.bg} flex justify-center items-center mb-3`}>
+                                            <Icon size={24} className={theme.text} />
                                         </div>
-                                        <div style={{ fontWeight: 600, color: '#1e293b', fontSize: 14 }}>{cat.name}</div>
+                                        <div className="font-semibold text-slate-800 text-sm">{cat.name}</div>
                                     </Link>
                                 );
                             })}
@@ -88,15 +72,15 @@ const Home = () => {
                 )}
 
                 <section>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
-                        <h2 className="section-title" style={{ margin: 0 }}>Latest Products</h2>
-                        <Link to="/store" style={{ color: C, textDecoration: 'none', fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
+                        <h2 className="text-2xl font-bold text-slate-800 m-0">Latest Products</h2>
+                        <Link to="/store" className="text-teal-600 no-underline text-sm font-semibold flex items-center gap-1.5 hover:text-teal-800 transition-colors">
                             View All <FaArrowRight size={12} />
                         </Link>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 18 }}>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
                         {featuredProducts.map(product => (
-                            <ProductCard key={product._id} product={product} color={C} />
+                            <ProductCard key={product.id} product={product} />
                         ))}
                     </div>
                 </section>
@@ -105,51 +89,29 @@ const Home = () => {
     );
 };
 
-const ProductCard = ({ product, color }) => (
-    <Link to={`/store/${product._id}`} style={{
-        backgroundColor: 'white', borderRadius: 14, overflow: 'hidden',
-        textDecoration: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-        transition: 'all 0.2s', border: '1px solid #e2e8f0'
-    }}
-        onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.1)'; }}
-        onMouseOut={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)'; }}
-    >
-        <div style={{
-            height: 180, backgroundColor: '#f1f5f9',
-            display: 'flex', justifyContent: 'center', alignItems: 'center',
-            overflow: 'hidden', position: 'relative'
-        }}>
+const ProductCard = ({ product }) => (
+    <Link to={`/store/${product.id}`} className="group bg-white rounded-2xl overflow-hidden no-underline shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 flex flex-col hover:-translate-y-1">
+        <div className="h-44 bg-slate-50 flex justify-center items-center relative overflow-hidden">
             {product.image ? (
-                <img src={product.image} alt={product.name} style={{
-                    width: '100%', height: '100%', objectFit: 'cover',
-                    transition: 'transform 0.3s'
-                }}
-                    onMouseOver={e => e.currentTarget.style.transform = 'scale(1.05)'}
-                    onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
-                    onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling && (e.currentTarget.nextSibling.style.display = 'flex'); }}
-                />
+                <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'flex'; }} />
             ) : null}
-            <div style={{
-                display: product.image ? 'none' : 'flex',
-                justifyContent: 'center', alignItems: 'center',
-                width: '100%', height: '100%', position: product.image ? 'absolute' : 'relative'
-            }}>
-                <FaPills size={48} color="#cbd5e1" />
+            <div className={`w-full h-full absolute inset-0 flex justify-center items-center bg-slate-50 ${product.image ? 'hidden' : ''}`}>
+                <FaPills size={48} className="text-slate-300" />
             </div>
         </div>
-        <div style={{ padding: 16 }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#1e293b', marginBottom: 4, lineHeight: 1.4 }}>{product.name}</div>
+        <div className="p-4 flex-1 flex flex-col">
+            <div className="text-[15px] font-bold text-slate-800 mb-1 leading-snug line-clamp-2">{product.name}</div>
             {product.categoryId?.name && (
-                <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 8 }}>{product.categoryId.name}</div>
+                <div className="text-xs text-slate-500 mb-3">{product.categoryId.name}</div>
             )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 18, fontWeight: 700, color }}>
-                    {product.sellingPrice} <span style={{ fontSize: 12 }}>AED</span>
+            <div className="mt-auto flex justify-between items-center">
+                <span className="text-lg font-extrabold text-teal-600">
+                    {product.sellingPrice} <span className="text-xs font-semibold text-teal-600/70">EGP</span>
                 </span>
                 {product.stockQuantity > 0 ? (
-                    <span style={{ fontSize: 11, color: '#16a34a', backgroundColor: '#f0fdf4', padding: '2px 8px', borderRadius: 10 }}>In Stock</span>
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100">IN STOCK</span>
                 ) : (
-                    <span style={{ fontSize: 11, color: '#dc2626', backgroundColor: '#fef2f2', padding: '2px 8px', borderRadius: 10 }}>Out of Stock</span>
+                    <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-1 rounded-full border border-red-100">OUT OF STOCK</span>
                 )}
             </div>
         </div>

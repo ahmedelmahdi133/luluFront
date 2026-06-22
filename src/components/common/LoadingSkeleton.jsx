@@ -1,9 +1,9 @@
 const LoadingSkeleton = ({ type = 'table', rows = 5, columns = 5, cards = 4 }) => {
     if (type === 'cards') {
         return (
-            <div className="stats-grid">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-5">
                 {Array.from({ length: cards }).map((_, i) => (
-                    <div key={i} className="stat-card" style={{ opacity: 1 }}>
+                    <div key={i} className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 transition-all relative overflow-hidden flex flex-col hover:shadow-md hover:-translate-y-0.5 before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-[3px] before:bg-[var(--stat-accent-color,#4f46e5)] before:opacity-80" style={{ opacity: 1 }}>
                         <div className="flex items-center gap-4">
                             <div className="skeleton skeleton-circle" style={{ width: 48, height: 48, flexShrink: 0 }} />
                             <div style={{ flex: 1 }}>
@@ -27,9 +27,9 @@ const LoadingSkeleton = ({ type = 'table', rows = 5, columns = 5, cards = 4 }) =
                     <div className="skeleton skeleton-text" style={{ width: '30%', height: 12 }} />
                 </div>
                 {/* Stat Cards */}
-                <div className="stats-grid">
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-5">
                     {Array.from({ length: 4 }).map((_, i) => (
-                        <div key={i} className="stat-card" style={{ opacity: 1 }}>
+                        <div key={i} className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 transition-all relative overflow-hidden flex flex-col hover:shadow-md hover:-translate-y-0.5 before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-[3px] before:bg-[var(--stat-accent-color,#4f46e5)] before:opacity-80" style={{ opacity: 1 }}>
                             <div className="flex items-center gap-4">
                                 <div className="skeleton skeleton-circle" style={{ width: 48, height: 48, flexShrink: 0 }} />
                                 <div style={{ flex: 1 }}>
@@ -47,7 +47,7 @@ const LoadingSkeleton = ({ type = 'table', rows = 5, columns = 5, cards = 4 }) =
                     ))}
                 </div>
                 {/* Chart area */}
-                <div className="grid-2-1">
+                <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5">
                     <div className="skeleton skeleton-card" style={{ height: 340 }} />
                     <div className="skeleton skeleton-card" style={{ height: 340 }} />
                 </div>
@@ -57,7 +57,7 @@ const LoadingSkeleton = ({ type = 'table', rows = 5, columns = 5, cards = 4 }) =
 
     if (type === 'form') {
         return (
-            <div className="card card-body" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+            <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md p-6" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
                 <div className="skeleton skeleton-text" style={{ width: '30%', height: 20 }} />
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
                     {Array.from({ length: 6 }).map((_, i) => (
@@ -106,8 +106,8 @@ const LoadingSkeleton = ({ type = 'table', rows = 5, columns = 5, cards = 4 }) =
 
     // Default: table skeleton
     return (
-        <div className="data-table-wrapper">
-            <table className="data-table">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+            <table className="w-full border-collapse text-sm">
                 <thead>
                     <tr>
                         {Array.from({ length: columns }).map((_, i) => (

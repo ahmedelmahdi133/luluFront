@@ -43,10 +43,10 @@ const ConfirmDialog = ({ isOpen, title, message, onConfirm, onCancel, confirmTex
                             {message}
                         </p>
                         <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'flex-end' }}>
-                            <button className="btn btn-ghost" onClick={onCancel}>
+                            <button className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-md border-none cursor-pointer transition-all leading-none whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-900 disabled:hover:bg-transparent" onClick={onCancel}>
                                 {cancelText}
                             </button>
-                            <button className={`btn ${danger ? 'btn-danger' : 'btn-primary'}`} onClick={onConfirm}>
+                            <button className={`inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-md border-none cursor-pointer transition-all leading-none whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed ${danger ? 'btn-danger' : 'btn-primary'}`} onClick={onConfirm}>
                                 {confirmText}
                             </button>
                         </div>

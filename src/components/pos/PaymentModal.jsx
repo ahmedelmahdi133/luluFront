@@ -96,7 +96,7 @@ const PaymentModal = ({ isOpen, totalAmount, subtotal, onConfirm, onClose }) => 
                         </div>
                         {discountAmount > 0 && (
                             <div style={{ color: '#dc2626', fontSize: 13, marginTop: 4 }}>
-                                Discount: {discountAmount.toFixed(2)} AED
+                                Discount: {discountAmount.toFixed(2)} EGP
                             </div>
                         )}
                     </div>
@@ -107,7 +107,7 @@ const PaymentModal = ({ isOpen, totalAmount, subtotal, onConfirm, onClose }) => 
                     }}>
                         <div style={{ fontSize: 14, color: '#64748b', marginBottom: 4 }}>Amount Due</div>
                         <div style={{ fontSize: 32, fontWeight: 800, color: '#16a34a' }}>
-                            {finalTotal.toFixed(2)} <span style={{ fontSize: 16 }}>AED</span>
+                            {finalTotal.toFixed(2)} <span style={{ fontSize: 16 }}>EGP</span>
                         </div>
                     </div>
 
@@ -151,7 +151,7 @@ const PaymentModal = ({ isOpen, totalAmount, subtotal, onConfirm, onClose }) => 
                                     marginTop: 8, textAlign: 'center', border: '1px solid #fde68a'
                                 }}>
                                     <span style={{ color: '#92400e', fontSize: 14 }}>Change: </span>
-                                    <span style={{ color: '#92400e', fontSize: 20, fontWeight: 800 }}>{change.toFixed(2)} AED</span>
+                                    <span style={{ color: '#92400e', fontSize: 20, fontWeight: 800 }}>{change.toFixed(2)} EGP</span>
                                 </div>
                             )}
                         </div>
