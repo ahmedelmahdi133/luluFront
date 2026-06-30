@@ -25,6 +25,7 @@ import AttendancePage from './pages/pharmacist/Attendance';
 import PayrollPage from './pages/pharmacist/Payroll';
 import ManageUsers from './pages/pharmacist/ManageUsers';
 import Shortages from './pages/pharmacist/Shortages';
+import Subscriptions from './pages/pharmacist/Subscriptions';
 
 import Home from './pages/customer/Home';
 import Store from './pages/customer/Store';
@@ -37,7 +38,7 @@ import Register from './pages/customer/Register';
 import SubmitPrescription from './pages/customer/SubmitPrescription';
 
 const PharmacistRoute = ({ children }) => (
-    <ProtectedRoute roles={['admin', 'pharmacist']}>
+    <ProtectedRoute roles={['superadmin', 'admin', 'pharmacist']}>
         <PharmacistLayout>{children}</PharmacistLayout>
     </ProtectedRoute>
 );
@@ -56,7 +57,7 @@ const CustomerRoute = ({ children, requireAuth }) => {
 const RootRedirect = () => {
     const { user, loading } = useAuth();
     if (loading) return null;
-    if (user && (user.role === 'admin' || user.role === 'pharmacist')) {
+    if (user && ['superadmin', 'admin', 'pharmacist'].includes(user.role)) {
         return <Navigate to="/dashboard" replace />;
     }
     return <CustomerLayout><Home /></CustomerLayout>;
@@ -99,6 +100,7 @@ function App() {
                                 <Route path="/attendance" element={<PharmacistRoute><AttendancePage /></PharmacistRoute>} />
                                 <Route path="/payroll" element={<PharmacistRoute><PayrollPage /></PharmacistRoute>} />
                                 <Route path="/users" element={<PharmacistRoute><ManageUsers /></PharmacistRoute>} />
+                                <Route path="/subscriptions" element={<PharmacistRoute><Subscriptions /></PharmacistRoute>} />
 
                                 {/* Customer Routes */}
                                 <Route path="/" element={<RootRedirect />} />

@@ -4,6 +4,7 @@ import { useReactToPrint } from 'react-to-print';
 import toast from 'react-hot-toast';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { PHARMACY_NAME } from '../../utils/constants';
 import { formatCurrency } from '../../utils/formatters';
 import PaymentModal from '../../components/pos/PaymentModal';
@@ -32,8 +33,10 @@ const POS = () => {
     const [products, setProducts] = useState([]);
     const [keyword, setKeyword] = useState('');
     const [cart, setCart] = useState([]);
-    const [categories, setCategories] = useState([]);
-    const [activeCategory, setActiveCategory] = useState('');
+    const { isRTL } = useLanguage();
+    const [cartWidth, setCartWidth] = useState(400);
+    const [isDragging, setIsDragging] = useState(false);
+
     const [showPayment, setShowPayment] = useState(false);
     const [heldOrders, setHeldOrders] = useState(loadHeldOrders);
     const [showHeld, setShowHeld] = useState(false);
@@ -85,9 +88,42 @@ const POS = () => {
         return () => clearTimeout(t);
     }, [fetchProducts]);
 
+    const startResizing = useCallback((e) => {
+        e.preventDefault();
+        setIsDragging(true);
+    }, []);
+
+    const stopResizing = useCallback(() => {
+        setIsDragging(false);
+    }, []);
+
+    const resize = useCallback((e) => {
+        if (isDragging) {
+            const calculatedWidth = isRTL ? e.clientX : (window.innerWidth - e.clientX);
+            if (calculatedWidth >= 340 && calculatedWidth <= window.innerWidth - 400) {
+                setCartWidth(calculatedWidth);
+            }
+        }
+    }, [isDragging, isRTL]);
+
+    useEffect(() => {
+        if (isDragging) {
+            window.addEventListener('mousemove', resize);
+            window.addEventListener('mouseup', stopResizing);
+            document.body.style.userSelect = 'none';
+        } else {
+            document.body.style.userSelect = '';
+        }
+        return () => {
+            window.removeEventListener('mousemove', resize);
+            window.removeEventListener('mouseup', stopResizing);
+            document.body.style.userSelect = '';
+        };
+    }, [isDragging, resize, stopResizing]);
+
     useEffect(() => {
         searchInputRef.current?.focus();
-        api.get('/categories').then(r => setCategories(r.data.data)).catch(() => {});
+
         api.get('/shifts/current').then(r => setCurrentShift(r.data.data)).catch(() => {});
         api.get('/orders/today-sales').then(r => setTodaySales(r.data.data)).catch(() => {});
     }, []);
@@ -209,9 +245,7 @@ const POS = () => {
         navigate('/login');
     };
 
-    const filteredProducts = activeCategory
-        ? products.filter(p => p.categoryId === activeCategory || p.categoryId?.id === activeCategory || p.categoryId?._id === activeCategory)
-        : products;
+    const filteredProducts = products;
 
     const handleContextMenu = (e, product) => {
         e.preventDefault();
@@ -256,7 +290,7 @@ const POS = () => {
             </div>
 
             {/* ===== Products Area ===== */}
-            <div style={{ flex: 7, display: 'flex', flexDirection: 'column', padding: 'var(--space-4)', gap: 'var(--space-3)' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 'var(--space-4)', gap: 'var(--space-3)', minWidth: 0, minHeight: 0 }}>
                 {/* Top Bar */}
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-3">
@@ -293,43 +327,17 @@ const POS = () => {
                 </div>
 
                 {/* Unified Products Box */}
-                <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden flex flex-col" style={{ flex: 1 }}>
-                    {/* Search & Categories Header */}
-                    <div className="p-4 border-b border-slate-100 bg-slate-50/50 space-y-4">
-                        {/* Search */}
-                <SearchInput
-                    ref={searchInputRef}
-                    placeholder="Scan barcode or type product name... (F1)"
-                    value={keyword}
-                    onChange={e => setKeyword(e.target.value)}
-                    onKeyDown={handleSearchKeyDown}
-                    wrapperClassName="relative w-full"
-                    inputStyle={{ paddingLeft: 44, fontSize: 'var(--font-size-lg)', padding: '14px 14px 14px 44px' }}
-                />
-
-                {/* Category Tabs */}
-                {categories.length > 0 && (
-                    <div className="flex gap-2 flex-wrap">
-                        <Button size="sm" variant={!activeCategory ? 'primary' : 'outline'} onClick={() => setActiveCategory('')}>
-                            All
-                        </Button>
-                        {categories.map(c => (
-                            <Button key={c.id || c._id} size="sm" variant={activeCategory === (c.id || c._id) ? 'primary' : 'outline'} onClick={() => setActiveCategory(c.id || c._id)}>
-                                {c.name}
-                            </Button>
-                        ))}
-                    </div>
-                )}
-                    </div>
+                <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden flex flex-col" style={{ flex: 1, minHeight: 0 }}>
 
                     {/* Products Table */}
-                    <div style={{ flex: 1, overflow: 'auto' }}>
+                    <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
                         <table className="w-full border-collapse text-sm">
-                        <thead>
+                        <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--color-bg-muted)' }}>
                             <tr>
                                 <th>Product Name</th>
                                 <th style={{ width: 80 }}>Price</th>
                                 <th style={{ width: 70 }}>Stock</th>
+                                <th style={{ width: 90 }}>Expiry Date</th>
                                 <th style={{ width: 60 }}>Add</th>
                             </tr>
                         </thead>
@@ -348,6 +356,9 @@ const POS = () => {
                                         <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] ${product.stockQuantity < (product.minStockAlert || 10) ? 'badge-danger' : 'badge-success'}`}>
                                             {product.stockQuantity}
                                         </span>
+                                    </td>
+                                    <td style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+                                        {product.expiryDate ? new Date(product.expiryDate).toLocaleDateString('en-GB', { month: '2-digit', year: 'numeric' }) : 'N/A'}
                                     </td>
                                     <td style={{ textAlign: 'center' }}>
                                         <Button size="icon" onClick={(e) => { e.stopPropagation(); addToCart(product); }}>
@@ -426,11 +437,24 @@ const POS = () => {
                 onSubmit={handleCreateReminder}
             />
 
+            {/* Resizer */}
+            <div 
+                onMouseDown={startResizing}
+                style={{
+                    width: 6,
+                    cursor: 'col-resize',
+                    backgroundColor: isDragging ? 'var(--color-primary)' : 'var(--color-border-light)',
+                    transition: 'background-color 0.2s',
+                    zIndex: 50,
+                    flexShrink: 0
+                }}
+            />
+
             {/* ===== Cart Panel ===== */}
             <div style={{
-                flex: 3, backgroundColor: 'var(--color-bg-card)', display: 'flex', flexDirection: 'column',
+                width: cartWidth, flexShrink: 0, backgroundColor: 'var(--color-bg-card)', display: 'flex', flexDirection: 'column',
                 boxShadow: '-4px 0 24px rgba(0,0,0,0.06)', minWidth: 340,
-                borderLeft: '1px solid var(--color-border-light)',
+                minHeight: 0
             }}>
                 {/* Cart Header */}
                 <div style={{
@@ -463,10 +487,22 @@ const POS = () => {
                     </div>
                 </div>
 
+                {/* Search Bar inside Cart Panel */}
+                <div style={{ padding: 'var(--space-3) var(--space-4)', borderBottom: '1px solid var(--color-border-light)', zIndex: 10 }}>
+                    <SearchInput
+                        ref={searchInputRef}
+                        placeholder="Scan barcode or type name... (F1)"
+                        value={keyword}
+                        onChange={e => setKeyword(e.target.value)}
+                        onKeyDown={handleSearchKeyDown}
+                        wrapperClassName="relative w-full"
+                    />
+                </div>
+
                 {/* Cart Items */}
-                <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--space-3) var(--space-4)' }}>
+                <div style={{ flex: 1, overflowY: 'auto', padding: '0 var(--space-4)', minHeight: 0 }}>
                     {cart.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center text-center text-slate-400 p-12" style={{ paddingTop: 'var(--space-16)' }}>
+                        <div className="flex flex-col items-center justify-center text-center text-slate-400 p-12" style={{ paddingTop: 'var(--space-12)' }}>
                             <FaShoppingCart size={48} style={{ opacity: 0.15, marginBottom: 'var(--space-4)' }} />
                             <div className="text-base font-semibold text-slate-600 mb-1">Cart is empty</div>
                             <div className="text-sm max-w-[250px]">Scan a barcode or click a product to add it</div>
@@ -479,6 +515,9 @@ const POS = () => {
                             }}>
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                     <div className="truncate" style={{ fontWeight: 'var(--font-weight-semibold)', fontSize: 'var(--font-size-md)' }}>{item.name}</div>
+                                    <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 2 }}>
+                                        Exp: {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString('en-GB', { month: '2-digit', year: 'numeric' }) : 'N/A'}
+                                    </div>
                                     <div style={{ color: 'var(--color-primary)', fontWeight: 'var(--font-weight-bold)', fontSize: 'var(--font-size-md)', marginTop: 2 }}>
                                         {(item.sellingPrice * item.quantity).toFixed(2)} <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-normal)', color: 'var(--color-text-muted)' }}>EGP</span>
                                     </div>

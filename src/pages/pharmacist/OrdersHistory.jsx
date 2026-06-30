@@ -82,7 +82,15 @@ const OrdersHistory = () => {
             key: 'status', label: 'Status', width: 110,
             render: (val) => { const sc = getStatusColor(val); return <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] ${sc.cls}`}>{getStatusLabel(val)}</span>; }
         },
-        { key: 'totalAmount', label: 'Total', render: (val) => <span className="cell-bold" style={{ color: 'var(--color-primary)' }}>{formatCurrency(val)}</span>, width: 120 },
+        {
+            key: 'products', label: 'Products', width: 200,
+            render: (_, row) => {
+                if (!row.items || row.items.length === 0) return '—';
+                const productNames = row.items.map(item => `${item.productName || item.product?.name || 'Unknown'} (x${item.quantity})`).join(', ');
+                return <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={productNames}>{productNames}</span>;
+            }
+        },
+        { key: 'totalAmount', label: 'Total', render: (val) => <span className="cell-bold" style={{ color: 'var(--color-primary)' }}>{formatCurrency(val)}</span>, width: 100 },
         {
             key: 'paymentMethod', label: 'Payment', width: 130,
             render: (val, row) => val === 'pending' ? <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] bg-amber-100 text-amber-900">Pending ({(row.dueAmount ?? row.totalAmount)?.toFixed?.(2)})</span> : getPaymentMethodLabel(val)

@@ -22,7 +22,7 @@ const Attendance = () => {
     const [filterStart, setFilterStart] = useState('');
     const [filterEnd, setFilterEnd] = useState('');
     const [manualForm, setManualForm] = useState({ employeeId: '', date: '', checkIn: '', checkOut: '', status: 'present', notes: '' });
-    const isAdmin = user?.role === 'admin';
+    const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
 
     const fetchTodayStatus = async () => { try { const res = await api.get('/attendance/today'); setTodayStatus(res.data.data); } catch {} };
     const fetchMyRecords = async () => { try { const res = await api.get('/attendance/my'); setMyRecords(res.data.data); } catch {} };

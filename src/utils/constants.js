@@ -1,4 +1,4 @@
-export const PHARMACY_NAME = 'Lulu Pharma';
+export const PHARMACY_NAME = 'Index Pharma';
 export const PHARMACY_ADDRESS = '';
 export const PHARMACY_PHONE = '';
 export const APP_VERSION = '1.0.0';

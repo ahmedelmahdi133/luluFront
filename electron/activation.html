@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <title>تفعيل Index Pharma</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(145deg, #0a0f1c 0%, #111827 40%, #0f172a 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* خلفية متحركة */
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 40%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 60%, rgba(14, 165, 233, 0.06) 0%, transparent 50%),
+                        radial-gradient(circle at 50% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 40%);
+            animation: bgPulse 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes bgPulse {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-2%, -1%) scale(1.05); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 24px;
+            padding: 40px 36px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5),
+                        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* الشعار */
+        .logo {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .logo-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 12px;
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+        }
+
+        .logo h1 {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #e2e8f0, #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+        }
+
+        .logo p {
+            font-size: 13px;
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        /* حقل بصمة الجهاز */
+        .hw-section {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 24px;
+        }
+
+        .hw-label {
+            font-size: 12px;
+            color: #818cf8;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .hw-label::before {
+            content: '🔑';
+            font-size: 14px;
+        }
+
+        .hw-id-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hw-id {
+            flex: 1;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #e2e8f0;
+            direction: ltr;
+            text-align: center;
+            background: rgba(30, 41, 59, 0.5);
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            user-select: all;
+        }
+
+        .copy-btn {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #a5b4fc;
+            border-radius: 10px;
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .copy-btn:hover {
+            background: rgba(99, 102, 241, 0.25);
+            color: #c7d2fe;
+            transform: scale(1.05);
+        }
+
+        .copy-btn.copied {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.4);
+            color: #86efac;
+        }
+
+        .hw-hint {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 10px;
+            line-height: 1.6;
+        }
+
+        /* حقل كود التفعيل */
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-bottom: 8px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid rgba(148, 163, 184, 0.15);
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            letter-spacing: 2px;
+            background: rgba(15, 23, 42, 0.6);
+            color: #f1f5f9;
+            direction: ltr;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        .input-group input::placeholder {
+            color: #475569;
+            letter-spacing: 1px;
+        }
+
+        /* زر التفعيل */
+        .activate-btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .activate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+        }
+
+        .activate-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .activate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .activate-btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to right,
+                transparent 0%,
+                rgba(255, 255, 255, 0.1) 50%,
+                transparent 100%
+            );
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* رسائل الحالة */
+        .message {
+            min-height: 24px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            text-align: center;
+            border-radius: 10px;
+            padding: 0;
+            transition: all 0.3s;
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            padding: 10px;
+        }
+
+        .message.success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            color: #86efac;
+            padding: 10px;
+        }
+
+        /* معلومات التواصل */
+        .contact-info {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .contact-info p {
+            font-size: 12px;
+            color: #64748b;
+            line-height: 1.8;
+        }
+
+        .contact-info .highlight {
+            color: #a5b4fc;
+            font-weight: 600;
+        }
+
+        /* Spinner */
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            vertical-align: middle;
+            margin-inline-end: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <!-- الشعار -->
+            <div class="logo">
+                <div class="logo-icon">💊</div>
+                <h1>Index Pharma</h1>
+                <p>تفعيل النظام — مطلوب لمرة واحدة فقط</p>
+            </div>
+
+            <!-- بصمة الجهاز -->
+            <div class="hw-section">
+                <div class="hw-label">معرّف الجهاز (Hardware ID)</div>
+                <div class="hw-id-row">
+                    <div class="hw-id" id="hardwareId">جاري التحميل...</div>
+                    <button class="copy-btn" id="copyBtn" title="نسخ المعرّف">📋</button>
+                </div>
+                <div class="hw-hint">
+                    📩 أرسل هذا المعرّف للمطور للحصول على كود التفعيل
+                </div>
+            </div>
+
+            <!-- رسالة الحالة -->
+            <div class="message" id="message"></div>
+
+            <!-- كود التفعيل -->
+            <div class="input-group">
+                <label for="licenseKey">كود التفعيل</label>
+                <input
+                    id="licenseKey"
+                    type="text"
+                    placeholder="XXXXX-XXXXX-XXXXX-XXXXX"
+                    maxlength="23"
+                    autocomplete="off"
+                    spellcheck="false"
+                />
+            </div>
+
+            <!-- زر التفعيل -->
+            <button class="activate-btn" id="activateBtn">
+                تفعيل النظام
+            </button>
+
+            <!-- معلومات التواصل -->
+            <div class="contact-info">
+                <p>
+                    للحصول على كود التفعيل تواصل مع <span class="highlight">الدعم الفني</span>
+                    <br/>وأرسل معرّف الجهاز الموضح أعلاه
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const hardwareIdEl = document.getElementById('hardwareId');
+        const copyBtn = document.getElementById('copyBtn');
+        const licenseKeyInput = document.getElementById('licenseKey');
+        const activateBtn = document.getElementById('activateBtn');
+        const messageEl = document.getElementById('message');
+
+        let currentHardwareId = '';
+
+        // تحميل بصمة الجهاز عند فتح الصفحة
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                currentHardwareId = await window.activationApi.getHardwareId();
+                hardwareIdEl.textContent = currentHardwareId;
+            } catch (err) {
+                hardwareIdEl.textContent = 'خطأ في قراءة بصمة الجهاز';
+                hardwareIdEl.style.color = '#fca5a5';
+            }
+        });
+
+        // نسخ بصمة الجهاز
+        copyBtn.addEventListener('click', async () => {
+            if (!currentHardwareId) return;
+            try {
+                await navigator.clipboard.writeText(currentHardwareId);
+                copyBtn.textContent = '✅';
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.textContent = '📋';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            } catch {
+                // fallback
+                const range = document.createRange();
+                range.selectNode(hardwareIdEl);
+                window.getSelection().removeAllRanges();
+                window.getSelection().addRange(range);
+            }
+        });
+
+        // تنسيق الإدخال تلقائياً (إضافة - كل 5 أحرف)
+        licenseKeyInput.addEventListener('input', (e) => {
+            let val = e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+            if (val.length > 20) val = val.substring(0, 20);
+            const parts = val.match(/.{1,5}/g);
+            e.target.value = parts ? parts.join('-') : '';
+        });
+
+        // زر التفعيل
+        activateBtn.addEventListener('click', async () => {
+            const key = licenseKeyInput.value.trim();
+
+            if (!key) {
+                showMessage('يرجى إدخال كود التفعيل', 'error');
+                return;
+            }
+
+            activateBtn.disabled = true;
+            activateBtn.innerHTML = '<span class="spinner"></span> جاري التحقق...';
+            messageEl.className = 'message';
+            messageEl.textContent = '';
+
+            try {
+                const result = await window.activationApi.activateLicense(key);
+
+                if (result.success) {
+                    showMessage('✅ تم تفعيل النظام بنجاح! جاري التشغيل...', 'success');
+                    activateBtn.innerHTML = '✅ تم التفعيل';
+                    // الانتظار قليلاً ثم تشغيل التطبيق
+                    setTimeout(() => {
+                        window.activationApi.launchAfterActivation();
+                    }, 1500);
+                } else {
+                    showMessage(result.message || 'كود التفعيل غير صحيح', 'error');
+                    activateBtn.disabled = false;
+                    activateBtn.innerHTML = 'تفعيل النظام';
+                }
+            } catch (err) {
+                showMessage('حدث خطأ أثناء التفعيل: ' + (err.message || ''), 'error');
+                activateBtn.disabled = false;
+                activateBtn.innerHTML = 'تفعيل النظام';
+            }
+        });
+
+        // إرسال بالضغط على Enter
+        licenseKeyInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                activateBtn.click();
+            }
+        });
+
+        function showMessage(text, type) {
+            messageEl.textContent = text;
+            messageEl.className = 'message ' + type;
+        }
+    </script>
+</body>
+</html>

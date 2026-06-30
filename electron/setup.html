@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8" />
-    <title>إعداد لولو فارما</title>
+    <title>إعداد اندكس فارما</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -55,7 +55,7 @@
 </head>
 <body>
     <div class="card">
-        <h1>مرحباً بك في لولو فارما</h1>
+        <h1>مرحباً بك في اندكس فارما</h1>
         <p>إعداد لمرة واحدة فقط. أدخل بيانات الاتصال بقاعدة البيانات ثم اضغط حفظ وتشغيل.</p>
         <div class="error" id="error"></div>
         <label for="databaseUrl">رابط قاعدة البيانات (PostgreSQL)</label>
@@ -85,7 +85,7 @@
             try {
                 await window.desktopApi.saveConfig({
                     databaseUrl,
-                    jwtSecret: jwtSecret || `lulu-${Date.now()}-${Math.random().toString(36).slice(2)}`
+                    jwtSecret: jwtSecret || `index-${Date.now()}-${Math.random().toString(36).slice(2)}`
                 });
                 await window.desktopApi.launchApp();
             } catch (err) {

@@ -43,8 +43,8 @@
     "vite": "^8.0.1"
   },
   "build": {
-    "appId": "com.lulu.pharma.desktop",
-    "productName": "Lulu Pharma Desktop",
+    "appId": "com.index.pharma.desktop",
+    "productName": "Index Pharma Desktop",
     "directories": {
       "output": "release"
     },

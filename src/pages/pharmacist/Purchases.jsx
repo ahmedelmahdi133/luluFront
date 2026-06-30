@@ -20,6 +20,8 @@ const Purchases = () => {
     const [selectedSupplier, setSelectedSupplier] = useState('');
     const [invoiceItems, setInvoiceItems] = useState([]);
     const [paidAmount, setPaidAmount] = useState('');
+    const [taxValue, setTaxValue] = useState('');
+    const [discountValue, setDiscountValue] = useState('');
     const [companyInvoiceNumber, setCompanyInvoiceNumber] = useState('');
     const [recentPurchaseItems, setRecentPurchaseItems] = useState([]);
     const [isBarcodeModalOpen, setIsBarcodeModalOpen] = useState(false);
@@ -74,15 +76,16 @@ const Purchases = () => {
             purchasePrice: product.purchasingPrice, 
             sellingPrice: product.sellingPrice,
             barcode: product.barcode,
-            expiryDate: product.expiryDate,
+            expiryDate: product.expiryDate ? product.expiryDate.split('T')[0] : '',
             image: product.image || '',
             quantity: 1 
         }]);
         setKeyword(''); setProducts([]);
     };
 
-    const updateItem = (id, field, value) => setInvoiceItems(invoiceItems.map(i => i.productId === id ? { ...i, [field]: (field === 'image' || field === 'name') ? value : Number(value) } : i));
-    const total = invoiceItems.reduce((t, i) => t + i.purchasePrice * i.quantity, 0);
+    const updateItem = (id, field, value) => setInvoiceItems(invoiceItems.map(i => i.productId === id ? { ...i, [field]: (field === 'image' || field === 'name' || field === 'expiryDate') ? value : Number(value) } : i));
+    const subtotal = invoiceItems.reduce((t, i) => t + i.purchasePrice * i.quantity, 0);
+    const total = subtotal + (Number(taxValue) || 0) - (Number(discountValue) || 0);
     const remaining = total - (Number(paidAmount) || 0);
 
     const handleSave = async () => {
@@ -91,9 +94,11 @@ const Purchases = () => {
         try {
             const payload = { 
                 supplierId: selectedSupplier, 
-                items: invoiceItems.map(i => ({ productId: i.productId, quantity: i.quantity, purchasePrice: i.purchasePrice, image: i.image })), 
+                items: invoiceItems.map(i => ({ productId: i.productId, quantity: i.quantity, purchasePrice: i.purchasePrice, image: i.image, expiryDate: i.expiryDate })), 
                 paidAmount: Number(paidAmount) || 0,
-                companyInvoiceNumber: companyInvoiceNumber || undefined
+                companyInvoiceNumber: companyInvoiceNumber || undefined,
+                taxValue: Number(taxValue) || 0,
+                discountValue: Number(discountValue) || 0
             };
             const response = await api.post('/purchases', payload);
             const sysNum = response.data.data.systemInvoiceNumber;
@@ -105,6 +110,8 @@ const Purchases = () => {
             setInvoiceItems([]); 
             setSelectedSupplier(''); 
             setPaidAmount('');
+            setTaxValue('');
+            setDiscountValue('');
             setCompanyInvoiceNumber('');
             
             // Open barcode modal automatically
@@ -166,41 +173,10 @@ const Purchases = () => {
 
             {/* Invoice Tab */}
             {activeTab === 'invoice' && (
-                <div style={{ display: 'flex', gap: 'var(--space-5)' }} id="invoice-section">
-                    {/* Product Search */}
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md p-6" style={{ flex: '0 0 300px' }}>
-                        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2"><FaSearch size={14} /> Search Products</h3>
-                        <SearchInput placeholder="Product name or barcode..." value={keyword} onChange={e => setKeyword(e.target.value)} onKeyDown={handleSearchKeyDown} wrapperStyle={{ marginBottom: 'var(--space-3)' }} />
-                        {products.map(p => (
-                            <div 
-                                key={getId(p)} 
-                                onClick={() => addItemToInvoice(p)}
-                                className="hover:bg-slate-50 cursor-pointer"
-                                style={{
-                                    padding: 'var(--space-3)', border: '1px solid var(--color-border-light)', borderRadius: 'var(--radius-md)',
-                                    marginBottom: 'var(--space-2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                                    fontSize: 'var(--font-size-base)', transition: 'all var(--transition-fast)',
-                                }}
-                            >
-                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                    <span>{p.name}</span>
-                                    <span style={{ fontSize: '0.8em', color: 'var(--color-text-muted)' }}>{p.barcode}</span>
-                                </div>
-                                <Button size="sm" onClick={(e) => { e.stopPropagation(); addItemToInvoice(p); }}><FaPlus size={10} /></Button>
-                            </div>
-                        ))}
-                        {keyword && products.length === 0 && (
-                            <div style={{ textAlign: 'center', padding: 'var(--space-4)', color: 'var(--color-text-muted)' }}>
-                                <p style={{ marginBottom: 'var(--space-2)' }}>Product not found</p>
-                                <Button size="sm" variant="outline" onClick={() => window.open('/products', '_blank')}>
-                                    <FaPlus size={10} /> Add New Product
-                                </Button>
-                            </div>
-                        )}
-                    </div>
+                <div style={{ display: 'flex', gap: 'var(--space-5)', height: 'calc(100vh - 220px)', minHeight: 500 }} id="invoice-section">
 
                     {/* Invoice */}
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md p-6" style={{ flex: 1 }}>
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md p-6" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
                             <div className="flex items-center gap-3">
                                 <h3 className="text-lg font-bold text-slate-900 m-0 flex items-center gap-2">Purchase Invoice</h3>
@@ -234,14 +210,49 @@ const Purchases = () => {
                             </div>
                         </div>
 
+                        {/* Search Bar as part of Invoice */}
+                        <div style={{ position: 'relative', marginBottom: 'var(--space-4)', zIndex: 20 }}>
+                            <SearchInput 
+                                placeholder="Search product by name or barcode to add... (Press Enter to add)" 
+                                value={keyword} 
+                                onChange={e => setKeyword(e.target.value)} 
+                                onKeyDown={handleSearchKeyDown} 
+                            />
+                            
+                            {/* Floating Search Results */}
+                            {keyword && products.length > 0 && (
+                                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-md)', maxHeight: '300px', overflowY: 'auto', zIndex: 100, marginTop: '4px' }}>
+                                    {products.map(p => (
+                                        <div key={getId(p)} onClick={() => addItemToInvoice(p)} className="hover:bg-slate-50 cursor-pointer" style={{ padding: 'var(--space-3)', borderBottom: '1px solid var(--color-border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div>
+                                                <div style={{ fontWeight: 600 }}>{p.name}</div>
+                                                <div style={{ fontSize: '0.8em', color: 'var(--color-text-muted)' }}>{p.barcode}</div>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                <span style={{ color: 'var(--color-success)', fontWeight: 600 }}>{p.purchasingPrice} EGP</span>
+                                                <Button size="sm" onClick={(e) => { e.stopPropagation(); addItemToInvoice(p); }}><FaPlus size={10} /></Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            {keyword && products.length === 0 && (
+                                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: 'var(--space-3)', textAlign: 'center', zIndex: 100, marginTop: '4px' }}>
+                                    <span style={{ color: 'var(--color-text-muted)' }}>Product not found</span>
+                                    <Button size="sm" variant="outline" onClick={() => window.open('/products', '_blank')} style={{ marginLeft: 10 }}>Add New</Button>
+                                </div>
+                            )}
+                        </div>
+
                         {/* Invoice Items Table (editing table — not DataTable) */}
-                        <div style={{ maxHeight: '45vh', overflowY: 'auto', marginBottom: 'var(--space-4)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border-light)' }}>
+                        <div style={{ flex: 1, overflowY: 'auto', marginBottom: 'var(--space-4)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border-light)', minHeight: 0 }}>
                             <table className="w-full border-collapse text-sm" style={{ fontSize: 'var(--font-size-base)', margin: 0 }}>
                                 <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--color-bg-muted)' }}>
                                     <tr>
                                         <th style={{ padding: '10px' }}>Item</th>
                                         <th style={{ padding: '10px' }}>Qty</th>
                                         <th style={{ padding: '10px' }}>Purchase Price</th>
+                                        <th style={{ padding: '10px' }}>Expiry Date</th>
                                         <th style={{ padding: '10px' }}>Image URL</th>
                                         <th style={{ padding: '10px' }}>Total</th>
                                         <th style={{ padding: '10px' }}></th>
@@ -249,12 +260,13 @@ const Purchases = () => {
                                 </thead>
                                 <tbody>
                                     {invoiceItems.length === 0 ? (
-                                        <tr><td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-8)', color: 'var(--color-text-muted)' }}>Add products to the invoice</td></tr>
+                                        <tr><td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-8)', color: 'var(--color-text-muted)' }}>Add products to the invoice</td></tr>
                                     ) : invoiceItems.map(item => (
                                         <tr key={item.productId}>
                                             <td className="cell-bold" style={{ padding: '10px' }}>{item.name}</td>
                                             <td style={{ padding: '10px' }}><InputField type="number" min="1" value={item.quantity} onChange={e => updateItem(item.productId, 'quantity', e.target.value)} style={{ width: 60, padding: '4px 8px', textAlign: 'center' }} /></td>
                                             <td style={{ padding: '10px' }}><InputField type="number" min="0" value={item.purchasePrice} onChange={e => updateItem(item.productId, 'purchasePrice', e.target.value)} style={{ width: 80, padding: '4px 8px', textAlign: 'center' }} /></td>
+                                            <td style={{ padding: '10px' }}><InputField type="date" value={item.expiryDate || ''} onChange={e => updateItem(item.productId, 'expiryDate', e.target.value)} style={{ minWidth: 120, padding: '4px 8px' }} /></td>
                                             <td style={{ padding: '10px' }}><InputField type="text" placeholder="https://..." value={item.image || ''} onChange={e => updateItem(item.productId, 'image', e.target.value)} style={{ minWidth: 120, padding: '4px 8px' }} /></td>
                                             <td className="cell-bold" style={{ padding: '10px' }}>{(item.quantity * item.purchasePrice).toFixed(2)}</td>
                                             <td style={{ padding: '10px' }}><Button variant="ghost" size="icon" onClick={() => setInvoiceItems(invoiceItems.filter(i => i.productId !== item.productId))} style={{ color: 'var(--color-danger)' }}><FaTrash size={11} /></Button></td>
@@ -266,6 +278,17 @@ const Purchases = () => {
 
                         {/* Totals */}
                         <div style={{ background: 'var(--color-bg-muted)', padding: 'var(--space-4)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-md)', marginBottom: 'var(--space-2)' }}>
+                                <span>Subtotal:</span><span style={{ fontWeight: 600 }}>{formatCurrency(subtotal)}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 'var(--font-size-md)', marginBottom: 'var(--space-2)' }}>
+                                <span>Discount:</span>
+                                <InputField type="number" value={discountValue} onChange={e => setDiscountValue(e.target.value)} placeholder="0" style={{ width: 140, textAlign: 'center', padding: '4px 8px' }} />
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 'var(--font-size-md)', marginBottom: 'var(--space-3)' }}>
+                                <span>Tax:</span>
+                                <InputField type="number" value={taxValue} onChange={e => setTaxValue(e.target.value)} placeholder="0" style={{ width: 140, textAlign: 'center', padding: '4px 8px' }} />
+                            </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-lg)', marginBottom: 'var(--space-3)' }}>
                                 <span>Invoice Total:</span><span style={{ fontWeight: 700 }}>{formatCurrency(total)}</span>
                             </div>

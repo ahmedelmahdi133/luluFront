@@ -7,11 +7,11 @@ import { FaSearch, FaPills, FaShoppingCart } from 'react-icons/fa';
 
 const Store = () => {
     const [products, setProducts] = useState([]);
-    const [categories, setCategories] = useState([]);
+
     const [loading, setLoading] = useState(true);
     const [keyword, setKeyword] = useState('');
     const [searchParams, setSearchParams] = useSearchParams();
-    const activeCategory = searchParams.get('category') || '';
+
     const { addToCart } = useCart();
 
     const fetchProducts = useCallback(async () => {
@@ -19,22 +19,20 @@ const Store = () => {
         try {
             const params = new URLSearchParams();
             if (keyword) params.append('keyword', keyword);
-            if (activeCategory) params.append('category', activeCategory);
+
             params.append('limit', '50');
             const res = await api.get(`/store/products?${params}`);
             setProducts(res.data.data);
         } catch { toast.error('Error loading products'); }
         finally { setLoading(false); }
-    }, [keyword, activeCategory]);
+    }, [keyword]);
 
     useEffect(() => {
         const t = setTimeout(() => fetchProducts(), 300);
         return () => clearTimeout(t);
     }, [fetchProducts]);
 
-    useEffect(() => {
-        api.get('/store/categories').then(r => setCategories(r.data.data)).catch(() => {});
-    }, []);
+
 
     const handleAddToCart = (e, product) => {
         e.preventDefault();
@@ -65,23 +63,7 @@ const Store = () => {
                         className="w-full pl-12 pr-5 py-4 bg-white border border-slate-200 rounded-2xl text-[15px] font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all shadow-sm"
                     />
                 </div>
-                <div className="flex gap-2.5 flex-wrap items-center">
-                    <button 
-                        onClick={() => setSearchParams({})} 
-                        className={`px-6 py-3.5 rounded-2xl text-[14px] font-bold transition-all duration-300 border-none cursor-pointer ${!activeCategory ? 'bg-slate-800 text-white shadow-md shadow-slate-800/20' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200 hover:border-slate-300 shadow-sm'}`}
-                    >
-                        All
-                    </button>
-                    {categories.map(cat => (
-                        <button 
-                            key={cat.id} 
-                            onClick={() => setSearchParams({ category: cat.id })}
-                            className={`px-6 py-3.5 rounded-2xl text-[14px] font-bold transition-all duration-300 border-none cursor-pointer ${activeCategory === cat.id ? 'bg-slate-800 text-white shadow-md shadow-slate-800/20' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200 hover:border-slate-300 shadow-sm'}`}
-                        >
-                            {cat.name}
-                        </button>
-                    ))}
-                </div>
+
             </div>
 
             {loading ? (
@@ -119,9 +101,7 @@ const Store = () => {
                                 )}
                             </div>
                             <div className="p-5 flex-1 flex flex-col border-t border-slate-50">
-                                {product.categoryId?.name && (
-                                    <div className="text-[11px] font-bold text-teal-600 uppercase tracking-wider mb-2">{product.categoryId.name}</div>
-                                )}
+
                                 <div className="text-base font-bold text-slate-800 mb-4 leading-snug line-clamp-2 group-hover:text-teal-700 transition-colors">{product.name}</div>
                                 
                                 <div className="mt-auto flex justify-between items-end">

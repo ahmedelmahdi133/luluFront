@@ -59,11 +59,7 @@ const ProductDetail = () => {
                 </div>
 
                 <div className="flex-1 p-8">
-                    {product.categoryId?.name && (
-                        <span className="inline-block text-xs text-teal-600 font-bold bg-teal-50 px-3 py-1 rounded-full mb-3 border border-teal-100">
-                            {product.categoryId.name}
-                        </span>
-                    )}
+
                     <h1 className="text-3xl font-extrabold text-slate-800 m-0 mb-1 leading-tight">{product.name}</h1>
                     {product.scientificName && (
                         <p className="text-sm font-medium text-slate-500 m-0 mb-4">{product.scientificName}</p>

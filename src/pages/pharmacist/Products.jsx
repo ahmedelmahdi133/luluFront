@@ -14,12 +14,12 @@ import InputField from '../../components/common/InputField';
 import SearchInput from '../../components/common/SearchInput';
 import { FaPlus, FaEdit, FaTrash, FaSearch, FaExclamationTriangle, FaTimes, FaBoxes, FaEye, FaCalendarPlus, FaArrowDown } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
-const emptyForm = { name: '', scientificName: '', barcode: '', description: '', purchasingPrice: '', sellingPrice: '', stockQuantity: '', expiryDate: '', categoryId: '', unit: 'Piece', isAvailableOnline: false, requiresPrescription: false, minStockAlert: 10, image: '' };
+const emptyForm = { name: '', scientificName: '', barcode: '', description: '', purchasingPrice: '', sellingPrice: '', stockQuantity: '', expiryDate: '', unit: 'Piece', isAvailableOnline: false, requiresPrescription: false, minStockAlert: 10, image: '' };
 
 const Products = () => {
     const { user } = useAuth();
     const [products, setProducts] = useState([]);
-    const [categories, setCategories] = useState([]);
+
     const [loading, setLoading] = useState(true);
     const [keyword, setKeyword] = useState('');
     const [lowStock, setLowStock] = useState(false);
@@ -71,7 +71,7 @@ const Products = () => {
     }, [fetchProducts]);
 
     useEffect(() => {
-        api.get('/categories').then(r => setCategories(r.data.data)).catch(() => {});
+
     }, []);
 
     const resetForm = () => { setShowForm(false); setIsEditing(false); setEditId(null); setForm(emptyForm); };
@@ -99,7 +99,7 @@ const Products = () => {
             name: p.name, scientificName: p.scientificName || '', barcode: p.barcode,
             description: p.description || '', purchasingPrice: p.purchasingPrice, sellingPrice: p.sellingPrice,
             stockQuantity: p.stockQuantity, expiryDate: p.expiryDate?.substring(0, 10) || '',
-            categoryId: p.categoryId?.id || p.categoryId?._id || p.categoryId || '', unit: p.unit || 'Piece',
+            unit: p.unit || 'Piece',
             isAvailableOnline: p.isAvailableOnline || false, requiresPrescription: p.requiresPrescription || false,
             minStockAlert: p.minStockAlert || 10, image: p.image || ''
         });
@@ -244,14 +244,6 @@ const Products = () => {
                                 <InputField label="Product Name" name="name" value={form.name} onChange={handleChange} required />
                                 <InputField label="Scientific Name" name="scientificName" value={form.scientificName} onChange={handleChange} />
                                 <InputField label="Barcode" name="barcode" value={form.barcode} onChange={handleChange} required />
-                                <InputField 
-                                    type="select" 
-                                    label="Category" 
-                                    name="categoryId" 
-                                    value={form.categoryId} 
-                                    onChange={handleChange}
-                                    options={[{ value: '', label: 'No Category' }, ...categories.map(c => ({ value: getId(c), label: c.name }))]}
-                                />
                                 <InputField label="Purchase Price" name="purchasingPrice" type="number" value={form.purchasingPrice} onChange={handleChange} required />
                                 <InputField label="Selling Price" name="sellingPrice" type="number" value={form.sellingPrice} onChange={handleChange} required />
                                 <InputField label="Quantity" name="stockQuantity" type="number" value={form.stockQuantity} onChange={handleChange} required />

@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useReactToPrint } from 'react-to-print';
 import toast from 'react-hot-toast';
 import api from '../../api/axios';
 import { formatDateTime, formatCurrency, getStatusLabel, getStatusColor } from '../../utils/formatters';
@@ -8,6 +9,7 @@ import DataTable from '../../components/common/DataTable';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import Button from '../../components/common/Button';
 import InputField from '../../components/common/InputField';
+import ShiftReceipt from '../../components/pharmacist/ShiftReceipt';
 import { FaClock, FaPlay, FaStop } from 'react-icons/fa';
 
 const Shifts = () => {
@@ -16,7 +18,12 @@ const Shifts = () => {
     const [loading, setLoading] = useState(true);
     const [startingCash, setStartingCash] = useState('');
     const [endingCash, setEndingCash] = useState('');
+    const [endingVisa, setEndingVisa] = useState('');
     const [closeNotes, setCloseNotes] = useState('');
+    
+    const [printingShift, setPrintingShift] = useState(null);
+    const printRef = useRef();
+    const handlePrint = useReactToPrint({ content: () => printRef.current });
 
     const fetchData = async () => {
         try {
@@ -43,13 +50,20 @@ const Shifts = () => {
 
     const closeShift = async () => {
         if (!endingCash && endingCash !== '0') { toast.error('Enter actual cash in drawer'); return; }
+        if (!endingVisa && endingVisa !== '0') { toast.error('Enter actual visa receipts'); return; }
         try {
-            const res = await api.put('/shifts/close', { endingCash: Number(endingCash), notes: closeNotes });
-            const diff = res.data.data.cashDifference;
-            if (diff === 0) toast.success('Shift closed — cash matches exactly');
-            else if (diff > 0) toast.success(`Shift closed — surplus: ${diff.toFixed(2)}`);
-            else toast.error(`Shift closed — deficit: ${Math.abs(diff).toFixed(2)}`);
-            setEndingCash(''); setCloseNotes('');
+            const res = await api.put('/shifts/close', { endingCash: Number(endingCash), endingVisa: Number(endingVisa), notes: closeNotes });
+            
+            setPrintingShift(res.data.data);
+            setTimeout(() => handlePrint(), 300);
+
+            const cashDiff = res.data.data.cashDifference;
+            const visaDiff = res.data.data.visaDifference;
+            const totalDiff = cashDiff + visaDiff;
+            if (totalDiff === 0) toast.success('Shift closed successfully — balances match');
+            else if (totalDiff > 0) toast.success(`Shift closed — total surplus: ${totalDiff.toFixed(2)}`);
+            else toast.error(`Shift closed — total deficit: ${Math.abs(totalDiff).toFixed(2)}`);
+            setEndingCash(''); setEndingVisa(''); setCloseNotes('');
             fetchData();
         } catch (err) { toast.error(err.response?.data?.message || 'Error'); }
     };
@@ -64,18 +78,24 @@ const Shifts = () => {
         { key: 'endTime', label: 'End', render: (val) => val ? formatDateTime(val) : '—', width: 150 },
         { key: 'totalSales', label: 'Sales', render: (val) => <span className="cell-bold">{formatCurrency(val)}</span>, width: 110 },
         { key: 'totalOrders', label: 'Invoices', width: 80 },
-        { key: 'startingCash', label: 'Starting', width: 90 },
-        { key: 'endingCash', label: 'Actual', width: 90, render: (val) => val ?? '—' },
-        { key: 'expectedCash', label: 'Expected', width: 90, render: (val) => val?.toFixed(2) ?? '—' },
+        { key: 'startingCash', label: 'Starting', width: 80 },
+        { key: 'expectedCash', label: 'Exp. Cash', width: 80, render: (val) => val?.toFixed(2) ?? '—' },
+        { key: 'endingCash', label: 'Act. Cash', width: 80, render: (val) => val ?? '—' },
+        { key: 'expectedVisa', label: 'Exp. Visa', width: 80, render: (val) => val?.toFixed(2) ?? '—' },
+        { key: 'endingVisa', label: 'Act. Visa', width: 80, render: (val) => val ?? '—' },
         {
-            key: 'cashDifference', label: 'Difference', width: 100, sortable: false,
+            key: 'difference', label: 'Differences', width: 120, sortable: false,
             render: (_, row) => {
                 if (row.status !== 'closed') return '—';
-                const diff = (row.endingCash || 0) - (row.expectedCash || 0);
+                const cashDiff = (row.endingCash || 0) - (row.expectedCash || 0);
+                const visaDiff = (row.endingVisa || 0) - (row.expectedVisa || 0);
+                const diff = cashDiff + visaDiff;
                 return (
-                    <span style={{ fontWeight: 700, color: diff >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
-                        {diff >= 0 ? `+${diff.toFixed(2)}` : diff.toFixed(2)}
-                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '0.75rem' }}>
+                        <span style={{ color: cashDiff >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>Cash: {cashDiff >= 0 ? `+${cashDiff.toFixed(2)}` : cashDiff.toFixed(2)}</span>
+                        <span style={{ color: visaDiff >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>Visa: {visaDiff >= 0 ? `+${visaDiff.toFixed(2)}` : visaDiff.toFixed(2)}</span>
+                        <span style={{ fontWeight: 700, color: diff >= 0 ? 'var(--color-success)' : 'var(--color-danger)', borderTop: '1px solid #eee', paddingTop: '2px', marginTop: '2px' }}>Total: {diff >= 0 ? `+${diff.toFixed(2)}` : diff.toFixed(2)}</span>
+                    </div>
                 );
             }
         },
@@ -117,6 +137,8 @@ const Shifts = () => {
                             <div style={{ fontSize: 'var(--font-size-md)', lineHeight: 2.4 }}>
                                 <div><strong>Started:</strong> {formatDateTime(currentShift.startTime)}</div>
                                 <div><strong>Starting Cash:</strong> {formatCurrency(currentShift.startingCash)}</div>
+                                <div><strong>Cash Sales:</strong> {formatCurrency(currentShift.cashSales || 0)}</div>
+                                <div><strong>Visa Sales:</strong> {formatCurrency(currentShift.visaSales || 0)}</div>
                                 <div><strong>Total Sales:</strong> {formatCurrency(currentShift.totalSales || 0)}</div>
                                 <div><strong>Invoices:</strong> {currentShift.totalOrders || 0}</div>
                             </div>
@@ -126,6 +148,7 @@ const Shifts = () => {
                                 <FaStop /> Close Shift
                             </h3>
                             <InputField label="Actual Cash in Drawer" type="number" min="0" value={endingCash} onChange={e => setEndingCash(e.target.value)} placeholder="0" style={{ fontSize: 'var(--font-size-xl)', textAlign: 'center', fontWeight: 700 }} id="shift-ending-cash" wrapperStyle={{ marginBottom: 'var(--space-3)' }} />
+                            <InputField label="Actual Visa Receipts" type="number" min="0" value={endingVisa} onChange={e => setEndingVisa(e.target.value)} placeholder="0" style={{ fontSize: 'var(--font-size-xl)', textAlign: 'center', fontWeight: 700 }} id="shift-ending-visa" wrapperStyle={{ marginBottom: 'var(--space-3)' }} />
                             <InputField label="Notes (optional)" value={closeNotes} onChange={e => setCloseNotes(e.target.value)} placeholder="Shift notes..." id="shift-close-notes" wrapperStyle={{ marginBottom: 'var(--space-4)' }} />
                             <Button variant="danger" size="lg" onClick={closeShift} style={{ width: '100%' }} id="btn-close-shift">
                                 <FaStop size={14} /> Close Shift
@@ -146,6 +169,10 @@ const Shifts = () => {
                 compact
                 exportFilename="shifts.csv"
             />
+            
+            <div style={{ display: 'none' }}>
+                <ShiftReceipt ref={printRef} shift={printingShift} />
+            </div>
         </div>
     );
 };

@@ -54,7 +54,7 @@ const Payroll = () => {
         { key: 'name', label: 'Employee', render: (val) => <span className="cell-bold">{val}</span> },
         {
             key: 'role', label: 'Role', width: 120,
-            render: (val) => <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] ${val === 'admin' ? 'badge-primary' : 'badge-success'}`}>{val === 'admin' ? 'Admin' : 'Pharmacist'}</span>
+            render: (val) => <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] ${val === 'superadmin' ? 'badge-danger' : val === 'admin' ? 'badge-primary' : 'badge-success'}`}>{val === 'superadmin' ? 'Super Admin' : val === 'admin' ? 'Admin' : 'Pharmacist'}</span>
         },
         { key: 'email', label: 'Email', render: (val) => <span className="text-muted">{val}</span> },
         {
@@ -94,7 +94,7 @@ const Payroll = () => {
         { key: 'name', label: 'Employee', render: (val) => <span className="cell-bold">{val}</span> },
         {
             key: 'role', label: 'Role', width: 120,
-            render: (val) => <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] ${val === 'admin' ? 'badge-primary' : 'badge-success'}`}>{val === 'admin' ? 'Admin' : 'Pharmacist'}</span>
+            render: (val) => <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full leading-[1.4] ${val === 'superadmin' ? 'badge-danger' : val === 'admin' ? 'badge-primary' : 'badge-success'}`}>{val === 'superadmin' ? 'Super Admin' : val === 'admin' ? 'Admin' : 'Pharmacist'}</span>
         },
         { key: 'workingDays', label: 'Working Days', width: 120, render: (val) => <span className="cell-bold">{val} days</span> },
         { key: 'totalHours', label: 'Total Hours', width: 120, render: (val) => <span className="cell-bold">{val.toFixed(2)} hrs</span> },

@@ -13,38 +13,13 @@ const Settings = () => {
     const { user } = useAuth();
     const { lang, changeLanguage, t } = useLanguage();
     const [activeTab, setActiveTab] = useState('language');
-    const [categories, setCategories] = useState([]);
-    const [catForm, setCatForm] = useState({ name: '', description: '' });
-    const [editingCat, setEditingCat] = useState(null);
     const [staffForm, setStaffForm] = useState({ name: '', email: '', password: '', phone: '', role: 'pharmacist' });
+    const [generalSettings, setGeneralSettings] = useState({ owner_email: '' });
 
     useEffect(() => {
-        api.get('/categories').then(r => setCategories(r.data.data)).catch(() => {});
+        api.get('/settings').then(r => setGeneralSettings(prev => ({ ...prev, ...r.data.data }))).catch(() => {});
     }, []);
 
-    const handleSaveCategory = async (e) => {
-        e.preventDefault();
-        try {
-            if (editingCat) {
-                await api.put(`/categories/${editingCat}`, catForm);
-                toast.success(t.settings.categoryUpdated);
-            } else {
-                await api.post('/categories', catForm);
-                toast.success(t.settings.categoryAdded);
-            }
-            setCatForm({ name: '', description: '' }); setEditingCat(null);
-            const res = await api.get('/categories');
-            setCategories(res.data.data);
-        } catch (err) { toast.error(err.response?.data?.message || 'Error'); }
-    };
-
-    const deleteCat = async (id) => {
-        try {
-            await api.delete(`/categories/${id}`);
-            toast.success(t.settings.categoryDeleted);
-            setCategories(categories.filter(c => getId(c) !== id));
-        } catch (err) { toast.error(err.response?.data?.message || 'Error'); }
-    };
 
     const handleAddStaff = async (e) => {
         e.preventDefault();
@@ -53,6 +28,14 @@ const Settings = () => {
             toast.success(t.settings.staffAdded);
             setStaffForm({ name: '', email: '', password: '', phone: '', role: 'pharmacist' });
         } catch (err) { toast.error(err.response?.data?.message || 'Error'); }
+    };
+
+    const handleSaveGeneralSettings = async (e) => {
+        e.preventDefault();
+        try {
+            await api.put('/settings', { settings: generalSettings });
+            toast.success('General settings saved successfully');
+        } catch (err) { toast.error(err.response?.data?.message || 'Error saving settings'); }
     };
 
     return (
@@ -68,13 +51,15 @@ const Settings = () => {
                 <button className={`tab-btn ${activeTab === 'language' ? 'active' : ''}`} onClick={() => setActiveTab('language')}>
                     <FaGlobe size={14} /> {t.settings.language}
                 </button>
-                <button className={`tab-btn ${activeTab === 'categories' ? 'active' : ''}`} onClick={() => setActiveTab('categories')}>
-                    <FaTags size={14} /> {t.settings.categories}
-                </button>
-                {user?.role === 'admin' && (
-                    <button className={`tab-btn ${activeTab === 'staff' ? 'active' : ''}`} onClick={() => setActiveTab('staff')}>
-                        <FaUserPlus size={14} /> {t.settings.addStaff}
-                    </button>
+                {(user?.role === 'admin' || user?.role === 'superadmin') && (
+                    <>
+                        <button className={`tab-btn ${activeTab === 'staff' ? 'active' : ''}`} onClick={() => setActiveTab('staff')}>
+                            <FaUserPlus size={14} /> {t.settings.addStaff}
+                        </button>
+                        <button className={`tab-btn ${activeTab === 'general' ? 'active' : ''}`} onClick={() => setActiveTab('general')}>
+                            <FaGlobe size={14} /> General
+                        </button>
+                    </>
                 )}
             </div>
 
@@ -114,53 +99,8 @@ const Settings = () => {
                 </div>
             )}
 
-            {activeTab === 'categories' && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md p-6 animate-in">
-                    <h3 style={{ margin: '0 0 var(--space-4)', fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-bold)' }}>{t.settings.manageCategories}</h3>
-                    <form onSubmit={handleSaveCategory} className="flex gap-3" style={{ marginBottom: 'var(--space-5)', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                        <InputField required placeholder={t.settings.categoryName} value={catForm.name} onChange={e => setCatForm({ ...catForm, name: e.target.value })} style={{ flex: 1, minWidth: 180 }} />
-                        <InputField placeholder={t.settings.categoryDesc} value={catForm.description} onChange={e => setCatForm({ ...catForm, description: e.target.value })} style={{ flex: 1, minWidth: 180 }} />
-                        <Button type="submit" variant={editingCat ? 'warning' : 'primary'}>
-                            {editingCat ? t.common.save : <><FaPlus size={12} /> {t.common.add}</>}
-                        </Button>
-                        {editingCat && (
-                            <Button type="button" variant="ghost" onClick={() => { setEditingCat(null); setCatForm({ name: '', description: '' }); }}>{t.common.cancel}</Button>
-                        )}
-                    </form>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 'var(--space-3)' }}>
-                        {categories.map(c => (
-                            <div key={getId(c)} style={{
-                                padding: 'var(--space-4)',
-                                border: '1px solid var(--color-border)',
-                                borderRadius: 'var(--radius-lg)',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                transition: 'all var(--transition-fast)',
-                            }}
-                            onMouseOver={e => e.currentTarget.style.borderColor = 'var(--color-primary-light)'}
-                            onMouseOut={e => e.currentTarget.style.borderColor = 'var(--color-border)'}
-                            >
-                                <div>
-                                    <div style={{ fontWeight: 'var(--font-weight-semibold)', fontSize: 'var(--font-size-md)' }}>{c.name}</div>
-                                    {c.description && <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 2 }}>{c.description}</div>}
-                                </div>
-                                <div className="flex gap-1">
-                                    <Button variant="ghost" size="icon" onClick={() => { setEditingCat(getId(c)); setCatForm({ name: c.name, description: c.description || '' }); }} id={`btn-edit-cat-${getId(c)}`}>
-                                        <FaEdit size={13} color="var(--color-primary)" />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" onClick={() => deleteCat(getId(c))} id={`btn-delete-cat-${getId(c)}`}>
-                                        <FaTrash size={13} color="var(--color-danger)" />
-                                    </Button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {activeTab === 'staff' && user?.role === 'admin' && (
+            {activeTab === 'staff' && (user?.role === 'admin' || user?.role === 'superadmin') && (
                 <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md p-6 animate-in">
                     <h3 style={{ margin: '0 0 var(--space-4)', fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-bold)' }}>{t.settings.addStaffMember}</h3>
                     <form onSubmit={handleAddStaff} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 'var(--space-4)' }}>
@@ -181,6 +121,36 @@ const Settings = () => {
                         <div style={{ display: 'flex', alignItems: 'flex-end' }}>
                             <Button type="submit" variant="success">{t.settings.createAccount}</Button>
                         </div>
+                    </form>
+                </div>
+            )}
+
+            {activeTab === 'general' && (user?.role === 'admin' || user?.role === 'superadmin') && (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md p-6 animate-in">
+                    <h3 style={{ margin: '0 0 var(--space-4)', fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-bold)' }}>General Settings</h3>
+                    <form onSubmit={handleSaveGeneralSettings} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', maxWidth: '400px' }}>
+                        <InputField 
+                            label="Owner Email (For Shift Reports)" 
+                            type="email" 
+                            placeholder="owner@example.com"
+                            value={generalSettings.owner_email || ''} 
+                            onChange={e => setGeneralSettings({ ...generalSettings, owner_email: e.target.value })} 
+                        />
+                        <InputField 
+                            label="WhatsApp Instance ID (UltraMsg)" 
+                            type="text" 
+                            placeholder="e.g. instance12345"
+                            value={generalSettings.whatsapp_instance_id || ''} 
+                            onChange={e => setGeneralSettings({ ...generalSettings, whatsapp_instance_id: e.target.value })} 
+                        />
+                        <InputField 
+                            label="WhatsApp Token (UltraMsg)" 
+                            type="text" 
+                            placeholder="e.g. 1a2b3c4d5e6f"
+                            value={generalSettings.whatsapp_token || ''} 
+                            onChange={e => setGeneralSettings({ ...generalSettings, whatsapp_token: e.target.value })} 
+                        />
+                        <Button type="submit" variant="primary">Save Settings</Button>
                     </form>
                 </div>
             )}

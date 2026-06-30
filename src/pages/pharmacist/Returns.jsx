@@ -37,6 +37,7 @@ const Returns = () => {
     // Sales return state
     const [orderNumber, setOrderNumber] = useState('');
     const [foundOrder, setFoundOrder] = useState(null);
+    const [foundOrdersList, setFoundOrdersList] = useState([]);
     const [salesReturnItems, setSalesReturnItems] = useState([]);
     const [salesRefundMethod, setSalesRefundMethod] = useState('cash');
     const [salesNotes, setSalesNotes] = useState('');
@@ -58,16 +59,29 @@ const Returns = () => {
 
     useEffect(() => { fetchReturns(); }, [filterType]);
 
+    useEffect(() => {
+        if (activeTab === 'sales' && !foundOrder) {
+            searchSalesOrder(true);
+        }
+    }, [activeTab]);
+
     // ============ SALES RETURN ============
-    const searchSalesOrder = async () => {
-        if (!orderNumber.trim()) return;
+    const searchSalesOrder = async (isDefault = false) => {
+        const queryStr = (isDefault === true) ? '' : orderNumber.trim();
         try {
-            const res = await api.get(`/returns/search-order?q=${orderNumber.trim()}`);
-            setFoundOrder(res.data.data);
-            setSalesReturnItems([]);
+            const res = await api.get(`/returns/search-order?q=${queryStr}`);
+            if (res.data.type === 'multiple') {
+                setFoundOrdersList(res.data.data);
+                if (isDefault !== true) setFoundOrder(null);
+            } else {
+                setFoundOrder(res.data.data);
+                setFoundOrdersList([]);
+            }
+            if (isDefault !== true) setSalesReturnItems([]);
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Order not found');
+            if (isDefault !== true) toast.error(err.response?.data?.message || 'Order not found');
             setFoundOrder(null);
+            setFoundOrdersList([]);
         }
     };
 
@@ -249,17 +263,51 @@ const Returns = () => {
 
                     <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-4)' }}>
                         <SearchInput
-                            placeholder="Enter order number (e.g. ORD-17...)"
+                            placeholder="Enter order number or medicine name/barcode..."
                             value={orderNumber}
-                            onChange={e => setOrderNumber(e.target.value)}
+                            onChange={e => {
+                                setOrderNumber(e.target.value);
+                                if (e.target.value.trim() === '') searchSalesOrder(true);
+                            }}
                             onKeyDown={e => e.key === 'Enter' && searchSalesOrder()}
                             wrapperStyle={{ flex: 1 }}
                             id="input-search-order"
                         />
-                        <Button variant="success" onClick={searchSalesOrder} id="btn-search-order">
+                        <Button variant="success" onClick={() => searchSalesOrder()} id="btn-search-order">
                             <FaSearch size={12} /> Search
                         </Button>
                     </div>
+
+                    {foundOrdersList.length > 0 && !foundOrder && (
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md" style={{ border: '1px solid var(--color-border)', marginBottom: 'var(--space-4)' }} id="found-orders-list">
+                            <div className="p-6">
+                                <h4 className="text-md font-bold text-slate-800 mb-4">Select the invoice to return from:</h4>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                                    {foundOrdersList.map(order => (
+                                        <div 
+                                            key={order.id} 
+                                            onClick={() => { setFoundOrder(order); setFoundOrdersList([]); }}
+                                            className="return-item-row"
+                                            style={{
+                                                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                padding: 'var(--space-3)', borderRadius: 'var(--radius-md)',
+                                                border: '1px solid var(--color-border-light)', background: 'var(--color-bg-muted)',
+                                                cursor: 'pointer', transition: 'all var(--transition-fast)'
+                                            }}
+                                        >
+                                            <div>
+                                                <span style={{ fontWeight: 'var(--font-weight-bold)', color: 'var(--color-primary)' }}>{order.orderNumber}</span>
+                                                <span className="text-sm text-muted" style={{ marginLeft: 'var(--space-3)' }}>
+                                                    {new Date(order.createdAt).toLocaleString()}
+                                                </span>
+                                            </div>
+                                            <div style={{ fontWeight: 'var(--font-weight-semibold)' }}>{order.totalAmount?.toFixed(2)} EGP</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {foundOrder && (
                         <div className="bg-white rounded-xl shadow-sm border border-slate-100 transition-all hover:shadow-md" style={{ border: '1px solid var(--color-border)' }} id="found-order-details">

@@ -46,74 +46,20 @@ for (const item of backendItems) {
     }
 }
 
-// Replace Postgres schema with SQLite schema
-console.log('🔄 استبدال إعدادات Prisma لتدعم SQLite...');
-const sqliteSchemaPath = path.join(bundleBackend, 'prisma', 'schema.sqlite.prisma');
-const targetSchemaPath = path.join(bundleBackend, 'prisma', 'schema.prisma');
-if (fs.existsSync(sqliteSchemaPath)) {
-    fs.copyFileSync(sqliteSchemaPath, targetSchemaPath);
-    // Remove the extra sqlite file from bundle
-    fs.unlinkSync(sqliteSchemaPath);
-}
-
-// Write a specific prisma.config.js for desktop mode
-const desktopPrismaConfig = `const { defineConfig } = require('prisma/config');
-module.exports = defineConfig({
-  engine: 'classic', 
-  datasource: {
-    url: 'file:./dev.db'
-  }
-});`;
-fs.writeFileSync(path.join(bundleBackend, 'prisma.config.js'), desktopPrismaConfig);
-
 console.log('📥 تثبيت اعتماديات الـ Backend للإنتاج...');
-// We need pg for the migration script to read from the remote DB
-// And Prisma CLI for db push. Instead of omitting dev, let's install everything and then prune later,
-// or just install standard and prisma.
 execSync('npm install', { cwd: bundleBackend, stdio: 'inherit', shell: true });
-console.log('📥 تثبيت اعتماديات SQLite للنسخة المكتبية...');
-execSync('npm install better-sqlite3 @libsql/client @prisma/adapter-libsql', { cwd: bundleBackend, stdio: 'inherit', shell: true });
 
-console.log('🛠️ توليد Prisma Client ودفع الهيكل (SQLite)...');
-execSync('npx prisma db push --accept-data-loss', {
-    cwd: bundleBackend,
-    stdio: 'inherit',
-    shell: true,
-    env: {
-        ...process.env,
-        DATABASE_URL: 'file:./dev.db'
-    }
-});
+console.log('🛠️ توليد Prisma Client (PostgreSQL)...');
 execSync('npx prisma generate', {
     cwd: bundleBackend,
     stdio: 'inherit',
     shell: true,
     env: {
         ...process.env,
-        DATABASE_URL: 'file:./dev.db'
+        DATABASE_URL: 'postgres://dummy:dummy@localhost:5432/dummy'
     }
 });
 
-console.log('🚀 تشغيل سكربت حقن المنتجات من PostgreSQL إلى SQLite...');
-// copy migration script into bundle temporarily
-const migrateScriptSrc = path.join(__dirname, 'migrate-to-sqlite.cjs');
-const migrateScriptDest = path.join(bundleBackend, 'migrate-to-sqlite.cjs');
-fs.copyFileSync(migrateScriptSrc, migrateScriptDest);
-
-execSync('node migrate-to-sqlite.cjs', {
-    cwd: bundleBackend,
-    stdio: 'inherit',
-    shell: true,
-    env: {
-        ...process.env,
-        DATABASE_URL: 'file:./dev.db'
-    }
-});
-
-// Clean up migration script
-fs.unlinkSync(migrateScriptDest);
-
-// Now remove dev dependencies to keep bundle size small
 console.log('🧹 تنظيف اعتماديات التطوير...');
 execSync('npm prune --omit=dev', { cwd: bundleBackend, stdio: 'inherit', shell: true });
 
